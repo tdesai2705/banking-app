@@ -1,26 +1,12 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: reusable-build
+name: build
 
 on:
-  workflow_call:
-    inputs:
-      image-name:
-        type: string
-        required: true
-        description: Docker Hub image name
-      image-tag:
-        type: string
-        required: false
-        default: latest
-        description: Docker image tag
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      image-tag:
-        type: string
-        required: false
-        default: latest
-        description: Docker image tag
 
 jobs:
   build-and-push:
@@ -40,7 +26,7 @@ jobs:
         uses: cloudbees-io/kaniko@v1
         kind: build
         with:
-          destination: tejasdesai27/banking-app:${{ inputs.image-tag }},tejasdesai27/banking-app:latest
+          destination: tejasdesai27/banking-app:${{ cloudbees.scm.sha }},tejasdesai27/banking-app:latest
           dockerfile: Dockerfile
           verbosity: info
 
@@ -49,6 +35,7 @@ jobs:
         with:
           content: |-
             ## Build summary
-            - Image: `tejasdesai27/banking-app:${{ inputs.image-tag }}`
+            - Image: `tejasdesai27/banking-app:latest`
+            - Commit SHA: `${{ cloudbees.scm.sha }}`
             - Run ID: ${{ cloudbees.run_id }}
             - Digest: ${{ steps.kaniko-build.outputs.digest }}
