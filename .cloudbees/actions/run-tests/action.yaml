@@ -1,0 +1,28 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: action
+name: Run Java tests and publish results
+description: Runs Maven tests and publishes JUnit XML results to CloudBees Unify
+
+inputs:
+  working-directory:
+    description: Directory containing the pom.xml
+    default: "."
+
+runs:
+  steps:
+    - name: Run Maven tests
+      uses: docker://maven:3.9.5-eclipse-temurin-21-alpine
+      shell: sh
+      run: |
+        cd ${{ inputs.working-directory }}
+        mvn test \
+          -Dmaven.test.failure.ignore=true \
+          -Dsurefire.reportFormat=xml \
+          -q
+        echo "Tests completed"
+
+    - name: Publish test results
+      uses: cloudbees-io/publish-test-results@v2
+      with:
+        test-type: junit
+        results-path: ${{ inputs.working-directory }}/target/surefire-reports

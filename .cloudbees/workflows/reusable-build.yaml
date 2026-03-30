@@ -1,0 +1,47 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: reusable-build
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        type: string
+        required: true
+        description: Docker Hub image name
+      image-tag:
+        type: string
+        required: false
+        default: latest
+        description: Docker image tag
+
+jobs:
+  build-and-push:
+    steps:
+      - name: Check out source code
+        uses: cloudbees-io/checkout@v1
+
+      - name: Configure Docker Hub credentials
+        uses: cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: index.docker.io
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push with Kaniko
+        id: kaniko-build
+        uses: cloudbees-io/kaniko@v1
+        kind: build
+        with:
+          destination: ${{ inputs.image-name }}:${{ inputs.image-tag }},${{ inputs.image-name }}:latest
+          dockerfile: Dockerfile
+          verbosity: info
+
+      - name: Publish build evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Build summary
+            - Image: `${{ inputs.image-name }}:${{ inputs.image-tag }}`
+            - Run ID: ${{ cloudbees.run_id }}
+            - Digest: ${{ steps.kaniko-build.outputs.digest }}

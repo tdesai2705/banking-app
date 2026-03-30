@@ -1,0 +1,44 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: ci
+
+on:
+  push:
+    branches:
+      - "**"
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        type: string
+        default: latest
+        required: false
+        description: Docker image tag to publish
+
+jobs:
+  test:
+    steps:
+      - name: Check out source code
+        uses: cloudbees-io/checkout@v1
+
+      - name: Run tests and publish results
+        uses: .cloudbees/actions/run-tests
+        with:
+          working-directory: "."
+
+      - name: Publish test evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Test job summary
+            - Run ID: ${{ cloudbees.run_id }}
+            - Branch: ${{ cloudbees.scm.branch }}
+            - Commit: ${{ cloudbees.scm.sha }}
+
+  build:
+    needs:
+      - test
+    uses: .cloudbees/workflows/reusable-build.yaml
+    secrets: inherit
+    inputs:
+      image-name: ${{ vars.DOCKER_USERNAME }}/banking-app
+      image-tag: ${{ inputs.image-tag }}
