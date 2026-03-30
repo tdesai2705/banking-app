@@ -77,6 +77,4 @@ jobs:
       image-name: banking-app
       dockerfile-path: ./Dockerfile
       context: .
-      docker-username: tejasdesai27
-    secrets:
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    secrets: inherit
