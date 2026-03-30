@@ -14,6 +14,18 @@ on:
         required: false
         default: latest
         description: Docker image tag
+  workflow_dispatch:
+    inputs:
+      image-name:
+        type: string
+        required: false
+        default: ${{ vars.DOCKER_USERNAME }}/banking-app
+        description: Docker Hub image name
+      image-tag:
+        type: string
+        required: false
+        default: latest
+        description: Docker image tag
 
 jobs:
   build-and-push:
