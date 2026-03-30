@@ -39,7 +39,7 @@ jobs:
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
           registry: index.docker.io
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: tdesai2705
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push with Kaniko
