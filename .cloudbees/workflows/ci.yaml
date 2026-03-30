@@ -40,7 +40,7 @@ jobs:
         with:
           registry: index.docker.io
           username: tejasdesai27
-          password: ${{ secrets.docker_token }}
+          password: ${{ actionsecrets.docker_token }}
 
       - name: Build and push with Kaniko
         id: kaniko-build
