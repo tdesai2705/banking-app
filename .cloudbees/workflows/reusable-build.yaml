@@ -19,9 +19,10 @@ on:
         required: false
         type: string
         default: '.'
-    secrets:
-      DOCKER_USERNAME:
+      docker-username:
         required: true
+        type: string
+    secrets:
       DOCKER_PASSWORD:
         required: true
   workflow_dispatch:
@@ -51,7 +52,7 @@ jobs:
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
           registry: index.docker.io
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ inputs.docker-username }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       # Step 3: Build and push with Kaniko
@@ -60,7 +61,7 @@ jobs:
         uses: cloudbees-io/kaniko@v1
         kind: build
         with:
-          destination: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }},${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:latest
+          destination: ${{ inputs.docker-username }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }},${{ inputs.docker-username }}/${{ inputs.image-name }}:latest
           context: ${{ inputs.context }}
           dockerfile: ${{ inputs.dockerfile-path }}
           verbosity: info
@@ -74,7 +75,7 @@ jobs:
             - Run ID: ${{ cloudbees.run_id }}
             - Branch: ${{ cloudbees.scm.branch }}
             - Commit: ${{ cloudbees.scm.sha }}
-            - Docker Image: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }}
-            - Also tagged as: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:latest
+            - Docker Image: ${{ inputs.docker-username }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }}
+            - Also tagged as: ${{ inputs.docker-username }}/${{ inputs.image-name }}:latest
             - Image Digest: ${{ steps.kaniko-build.outputs.digest }}
             - Build Status: Successfully built and pushed to Docker Hub ✅
