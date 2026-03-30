@@ -1,20 +1,29 @@
+# CloudBees Unify Reusable Workflow for Building Docker Images with Kaniko
+# Banking App - Java/Spring Boot
+
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: reusable-build
+name: Build Reusable Workflow
 
 on:
   workflow_call:
     inputs:
       image-name:
+        required: true
         type: string
+      dockerfile-path:
         required: false
-        default: tejasdesai27/banking-app
-        description: Docker Hub image name
-      image-tag:
         type: string
+        default: './Dockerfile'
+      context:
         required: false
-        default: latest
-        description: Docker image tag
+        type: string
+        default: '.'
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
   workflow_dispatch:
     inputs:
       image-tag:
@@ -23,34 +32,49 @@ on:
         default: latest
         description: Docker image tag
 
+# CloudBees Unify permissions format
+permissions:
+  scm-token-own: read
+  scm-token-org: read
+  id-token: read
+
 jobs:
   build-and-push:
     steps:
-      - name: Check out source code
+      # Step 1: Checkout code
+      - name: Checkout code
         uses: cloudbees-io/checkout@v1
 
+      # Step 2: Configure Docker Hub credentials
       - name: Configure Docker Hub credentials
+        id: dockerconfig
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
           registry: index.docker.io
-          username: tejasdesai27
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push with Kaniko
+      # Step 3: Build and push with Kaniko
+      - name: Build and push Docker image
         id: kaniko-build
         uses: cloudbees-io/kaniko@v1
         kind: build
         with:
-          destination: tejasdesai27/banking-app:${{ cloudbees.scm.sha }},tejasdesai27/banking-app:latest
-          dockerfile: Dockerfile
+          destination: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }},${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:latest
+          context: ${{ inputs.context }}
+          dockerfile: ${{ inputs.dockerfile-path }}
           verbosity: info
 
+      # Step 4: Publish build evidence
       - name: Publish build evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
-            ## Build summary
-            - Image: `tejasdesai27/banking-app:latest`
-            - Commit SHA: `${{ cloudbees.scm.sha }}`
+            ## Build Evidence - Banking App
             - Run ID: ${{ cloudbees.run_id }}
-            - Digest: ${{ steps.kaniko-build.outputs.digest }}
+            - Branch: ${{ cloudbees.scm.branch }}
+            - Commit: ${{ cloudbees.scm.sha }}
+            - Docker Image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }}
+            - Also tagged as: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:latest
+            - Image Digest: ${{ steps.kaniko-build.outputs.digest }}
+            - Build Status: Successfully built and pushed to Docker Hub ✅

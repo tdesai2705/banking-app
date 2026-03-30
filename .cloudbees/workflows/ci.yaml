@@ -1,35 +1,82 @@
+# CloudBees Unify Main CI Workflow
+# Banking App - Java/Spring Boot
+
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: ci
+name: CI Workflow
 
+# Triggers
 on:
   push:
     branches:
-      - "**"
+      - main
+      - develop
   workflow_dispatch:
 
+# CloudBees Unify permissions
+permissions:
+  scm-token-own: read
+  scm-token-org: read
+  id-token: read
+
 jobs:
+  # Job 1: Test
   test:
     steps:
-      - name: Check out source code
+      # Step 1: Checkout code
+      - name: Checkout code
         uses: cloudbees-io/checkout@v1
 
+      # Step 2: Run tests using custom action
       - name: Run tests and publish results
         uses: ./.cloudbees/actions/run-tests
         with:
           working-directory: "."
 
+      # Step 3: Extract test summary
+      - name: Extract test summary
+        id: test-summary
+        uses: docker://alpine:latest
+        shell: sh
+        run: |
+          apk add --no-cache grep
+          if [ -f target/surefire-reports/TEST-*.xml ]; then
+            TOTAL=$(grep -oP 'tests="\K[0-9]+' target/surefire-reports/TEST-*.xml | head -1 || echo "0")
+            FAILURES=$(grep -oP 'failures="\K[0-9]+' target/surefire-reports/TEST-*.xml | head -1 || echo "0")
+            ERRORS=$(grep -oP 'errors="\K[0-9]+' target/surefire-reports/TEST-*.xml | head -1 || echo "0")
+            PASSED=$((TOTAL - FAILURES - ERRORS))
+          else
+            TOTAL=0
+            PASSED=0
+            FAILURES=0
+          fi
+          echo "$TOTAL" > $CLOUDBEES_OUTPUTS/TOTAL_TESTS
+          echo "$PASSED" > $CLOUDBEES_OUTPUTS/PASSED_TESTS
+          echo "$FAILURES" > $CLOUDBEES_OUTPUTS/FAILED_TESTS
+
+      # Step 4: Publish test evidence
       - name: Publish test evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
-            ## Test job summary
+            ## Test Evidence - Banking App
             - Run ID: ${{ cloudbees.run_id }}
             - Branch: ${{ cloudbees.scm.branch }}
             - Commit: ${{ cloudbees.scm.sha }}
+            - Total Tests: ${{ steps.test-summary.outputs.TOTAL_TESTS }}
+            - Passed: ${{ steps.test-summary.outputs.PASSED_TESTS }}
+            - Failed: ${{ steps.test-summary.outputs.FAILED_TESTS }}
+            - Status: ${{ steps.test-summary.outputs.FAILED_TESTS == '0' && 'SUCCESS ✅' || 'FAILED ❌' }}
 
+  # Job 2: Build and Push Docker Image
+  # Calls the reusable build workflow
   build:
-    needs:
-      - test
+    needs: test
     uses: ./.cloudbees/workflows/reusable-build.yaml
-    secrets: inherit
+    with:
+      image-name: banking-app
+      dockerfile-path: ./Dockerfile
+      context: .
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
