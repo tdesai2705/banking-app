@@ -7,12 +7,6 @@ on:
     branches:
       - "**"
   workflow_dispatch:
-    inputs:
-      image-tag:
-        type: string
-        default: latest
-        required: false
-        description: Docker image tag to publish
 
 jobs:
   test:
@@ -53,7 +47,7 @@ jobs:
         uses: cloudbees-io/kaniko@v1
         kind: build
         with:
-          destination: ${{ vars.DOCKER_USERNAME }}/banking-app:${{ inputs.image-tag || 'latest' }},${{ vars.DOCKER_USERNAME }}/banking-app:latest
+          destination: ${{ vars.DOCKER_USERNAME }}/banking-app:${{ cloudbees.scm.sha }},${{ vars.DOCKER_USERNAME }}/banking-app:latest
           dockerfile: Dockerfile
           verbosity: info
 
@@ -62,6 +56,7 @@ jobs:
         with:
           content: |-
             ## Build summary
-            - Image: `${{ vars.DOCKER_USERNAME }}/banking-app:${{ inputs.image-tag || 'latest' }}`
+            - Image: `${{ vars.DOCKER_USERNAME }}/banking-app:latest`
+            - Commit SHA: `${{ cloudbees.scm.sha }}`
             - Run ID: ${{ cloudbees.run_id }}
             - Digest: ${{ steps.kaniko-build.outputs.digest }}
