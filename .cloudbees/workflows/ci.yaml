@@ -21,7 +21,7 @@ jobs:
         uses: cloudbees-io/checkout@v1
 
       - name: Run tests and publish results
-        uses: .cloudbees/actions/run-tests
+        uses: ./.cloudbees/actions/run-tests
         with:
           working-directory: "."
 
@@ -37,8 +37,31 @@ jobs:
   build:
     needs:
       - test
-    uses: .cloudbees/workflows/reusable-build.yaml
-    secrets: inherit
-    inputs:
-      image-name: ${{ vars.DOCKER_USERNAME }}/banking-app
-      image-tag: ${{ inputs.image-tag }}
+    steps:
+      - name: Check out source code
+        uses: cloudbees-io/checkout@v1
+
+      - name: Configure Docker Hub credentials
+        uses: cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: index.docker.io
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push with Kaniko
+        id: kaniko-build
+        uses: cloudbees-io/kaniko@v1
+        kind: build
+        with:
+          destination: ${{ vars.DOCKER_USERNAME }}/banking-app:${{ inputs.image-tag || 'latest' }},${{ vars.DOCKER_USERNAME }}/banking-app:latest
+          dockerfile: Dockerfile
+          verbosity: info
+
+      - name: Publish build evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Build summary
+            - Image: `${{ vars.DOCKER_USERNAME }}/banking-app:${{ inputs.image-tag || 'latest' }}`
+            - Run ID: ${{ cloudbees.run_id }}
+            - Digest: ${{ steps.kaniko-build.outputs.digest }}
