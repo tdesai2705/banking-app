@@ -10,6 +10,8 @@ on:
 
 jobs:
   build-and-push:
+    env:
+      DOCKER_USERNAME: tejasdesai27
     steps:
       - name: Check out source code
         uses: cloudbees-io/checkout@v1
@@ -18,15 +20,15 @@ jobs:
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
           registry: index.docker.io
-          username: tejasdesai27
-          password: ${{ actionsecrets.docker_token }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ secrets.docker_token }}
 
       - name: Build and push with Kaniko
         id: kaniko-build
         uses: cloudbees-io/kaniko@v1
         kind: build
         with:
-          destination: tejasdesai27/banking-app:${{ cloudbees.scm.sha }},tejasdesai27/banking-app:latest
+          destination: ${{ env.DOCKER_USERNAME }}/banking-app:${{ cloudbees.scm.sha }},${{ env.DOCKER_USERNAME }}/banking-app:latest
           dockerfile: Dockerfile
           verbosity: info
 
@@ -35,7 +37,7 @@ jobs:
         with:
           content: |-
             ## Build summary
-            - Image: `tejasdesai27/banking-app:latest`
+            - Image: `${{ env.DOCKER_USERNAME }}/banking-app:latest`
             - Commit SHA: `${{ cloudbees.scm.sha }}`
             - Run ID: ${{ cloudbees.run_id }}
             - Digest: ${{ steps.kaniko-build.outputs.digest }}
