@@ -16,11 +16,6 @@ on:
         description: Docker image tag
   workflow_dispatch:
     inputs:
-      image-name:
-        type: string
-        required: false
-        default: ${{ vars.DOCKER_USERNAME }}/banking-app
-        description: Docker Hub image name
       image-tag:
         type: string
         required: false
@@ -37,7 +32,7 @@ jobs:
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
           registry: index.docker.io
-          username: ${{ vars.DOCKER_USERNAME }}
+          username: tdesai2705
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push with Kaniko
@@ -45,7 +40,7 @@ jobs:
         uses: cloudbees-io/kaniko@v1
         kind: build
         with:
-          destination: ${{ inputs.image-name }}:${{ inputs.image-tag }},${{ inputs.image-name }}:latest
+          destination: tdesai2705/banking-app:${{ inputs.image-tag }},tdesai2705/banking-app:latest
           dockerfile: Dockerfile
           verbosity: info
 
@@ -54,6 +49,6 @@ jobs:
         with:
           content: |-
             ## Build summary
-            - Image: `${{ inputs.image-name }}:${{ inputs.image-tag }}`
+            - Image: `tdesai2705/banking-app:${{ inputs.image-tag }}`
             - Run ID: ${{ cloudbees.run_id }}
             - Digest: ${{ steps.kaniko-build.outputs.digest }}
