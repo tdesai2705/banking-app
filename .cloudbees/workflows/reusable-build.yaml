@@ -32,7 +32,7 @@ jobs:
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
           registry: index.docker.io
-          username: tdesai2705
+          username: tejasdesai27
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push with Kaniko
@@ -40,7 +40,7 @@ jobs:
         uses: cloudbees-io/kaniko@v1
         kind: build
         with:
-          destination: tdesai2705/banking-app:${{ inputs.image-tag }},tdesai2705/banking-app:latest
+          destination: tejasdesai27/banking-app:${{ inputs.image-tag }},tejasdesai27/banking-app:latest
           dockerfile: Dockerfile
           verbosity: info
 
@@ -49,6 +49,6 @@ jobs:
         with:
           content: |-
             ## Build summary
-            - Image: `tdesai2705/banking-app:${{ inputs.image-tag }}`
+            - Image: `tejasdesai27/banking-app:${{ inputs.image-tag }}`
             - Run ID: ${{ cloudbees.run_id }}
             - Digest: ${{ steps.kaniko-build.outputs.digest }}
