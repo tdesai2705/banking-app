@@ -16,6 +16,17 @@ on:
         required: true
         type: string
         description: Target environment (dev/staging/prod)
+  workflow_dispatch:
+    inputs:
+      artifact-id:
+        required: true
+        type: string
+        description: The artifact ID to deploy
+      environment:
+        required: true
+        type: string
+        description: Target environment (dev/staging/prod)
+        default: dev
 
 permissions:
   scm-token-own: read
