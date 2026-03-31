@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-app
+  labels:
+    app: banking-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: banking-app
+  template:
+    metadata:
+      labels:
+        app: banking-app
+    spec:
+      containers:
+      - name: banking-app
+        image: tejasdesai27/banking-app:latest  # Will be replaced dynamically
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:h2:mem:bankingdb"  # Will be replaced by environment variable
+        - name: SERVER_PORT
+          value: "8080"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 5

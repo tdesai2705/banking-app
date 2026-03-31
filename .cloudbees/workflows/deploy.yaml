@@ -1,0 +1,102 @@
+# CloudBees Unify Deploy Workflow
+# Deploys Banking App to Kubernetes
+
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: Deploy Banking App
+
+on:
+  workflow_call:
+    inputs:
+      artifact-id:
+        required: true
+        type: string
+        description: The artifact ID to deploy
+      environment:
+        required: true
+        type: string
+        description: Target environment (dev/staging/prod)
+
+permissions:
+  scm-token-own: read
+  scm-token-org: read
+  id-token: read
+
+jobs:
+  deploy:
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: cloudbees-io/checkout@v1
+
+      - name: Get artifact details
+        id: artifact-details
+        uses: cloudbees-io/get-artifact-details@v1
+        with:
+          artifact-id: ${{ inputs.artifact-id }}
+
+      - name: Set up kubectl with kubeconfig
+        uses: docker://bitnami/kubectl:latest
+        shell: sh
+        run: |
+          # Create kubeconfig from secret
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+          # Verify connection
+          kubectl cluster-info
+          echo "Connected to Kubernetes cluster"
+
+      - name: Deploy to Kubernetes
+        uses: docker://bitnami/kubectl:latest
+        shell: sh
+        run: |
+          # Set kubeconfig
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+          # Set namespace
+          NAMESPACE="banking-${{ inputs.environment }}"
+
+          # Create namespace if it doesn't exist
+          kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
+          kubectl apply -f k8s/service.yaml -n $NAMESPACE
+
+          # Update the image to the specific artifact version
+          IMAGE_TAG="${{ steps.artifact-details.outputs.version }}"
+          kubectl set image deployment/banking-app \
+            banking-app=tejasdesai27/banking-app:$IMAGE_TAG \
+            -n $NAMESPACE
+
+          # Wait for rollout to complete
+          kubectl rollout status deployment/banking-app -n $NAMESPACE --timeout=5m
+
+          echo "Deployment successful to $NAMESPACE!"
+          echo "Image: tejasdesai27/banking-app:$IMAGE_TAG"
+
+          # Get service details
+          kubectl get service banking-app -n $NAMESPACE
+
+      - name: Publish deployment evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Deployment Evidence - Banking App
+            - Environment: ${{ inputs.environment }}
+            - Namespace: banking-${{ inputs.environment }}
+            - Artifact ID: ${{ inputs.artifact-id }}
+            - Image: tejasdesai27/banking-app:${{ steps.artifact-details.outputs.version }}
+            - Deployment Status: Success ✅
+            - Run ID: ${{ cloudbees.run_id }}
+            - Database URL: ${{ vars.DATABASE_URL }}
+
+      - name: Register deployed artifact
+        uses: cloudbees-io/register-deployed-artifact@v2
+        with:
+          artifact-id: ${{ inputs.artifact-id }}
+          target-environment: ${{ inputs.environment }}
