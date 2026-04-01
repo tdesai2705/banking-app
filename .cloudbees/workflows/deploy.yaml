@@ -15,7 +15,7 @@ on:
       environment:
         required: true
         type: string
-        description: Target environment (dev/staging/prod)
+        description: Target environment (qa/staging/prod)
   workflow_dispatch:
     inputs:
       artifact-id:
@@ -25,8 +25,8 @@ on:
       environment:
         required: true
         type: string
-        description: Target environment (dev/staging/prod)
-        default: dev
+        description: Target environment (qa/staging/prod)
+        default: qa
 
 permissions:
   scm-token-own: read
