@@ -46,52 +46,22 @@ jobs:
         with:
           artifact-id: ${{ inputs.artifact-id }}
 
-      - name: Set up kubectl with kubeconfig
-        uses: docker://bitnami/kubectl:latest
-        shell: sh
-        run: |
-          # Create kubeconfig from secret
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-          # Verify connection
-          kubectl cluster-info
-          echo "Connected to Kubernetes cluster"
-
-      - name: Deploy to Kubernetes
-        uses: docker://bitnami/kubectl:latest
-        shell: sh
-        run: |
-          # Set kubeconfig
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-          # Set namespace
-          NAMESPACE="banking-${{ inputs.environment }}"
-
-          # Create namespace if it doesn't exist
-          kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-
-          # Apply Kubernetes manifests
-          kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
-          kubectl apply -f k8s/service.yaml -n $NAMESPACE
-
-          # Update the image to the specific artifact version
-          IMAGE_TAG="${{ steps.artifact-details.outputs.version }}"
-          kubectl set image deployment/banking-app \
-            banking-app=tejasdesai27/banking-app:$IMAGE_TAG \
-            -n $NAMESPACE
-
-          # Wait for rollout to complete
-          kubectl rollout status deployment/banking-app -n $NAMESPACE --timeout=5m
-
-          echo "Deployment successful to $NAMESPACE!"
-          echo "Image: tejasdesai27/banking-app:$IMAGE_TAG"
-
-          # Get service details
-          kubectl get service banking-app -n $NAMESPACE
+      - name: Install Helm chart
+        id: install-chart
+        uses: cloudbees-io/helm-install@v1
+        with:
+          chart-location: ${{ cloudbees.workspace }}/chart
+          release-name: banking-app-${{ inputs.environment }}
+          namespace: banking-${{ inputs.environment }}
+          create-namespace: true
+          values: |
+            image:
+              repository: tejasdesai27/banking-app
+              tag: ${{ steps.artifact-details.outputs.version }}
+              pullPolicy: IfNotPresent
+            env:
+              springDatasourceUrl: ${{ vars.DATABASE_URL }}
+              serverPort: ${{ vars.API_PORT }}
 
       - name: Publish deployment evidence
         uses: cloudbees-io/publish-evidence-item@v1
@@ -100,11 +70,14 @@ jobs:
             ## Deployment Evidence - Banking App
             - Environment: ${{ inputs.environment }}
             - Namespace: banking-${{ inputs.environment }}
+            - Release Name: banking-app-${{ inputs.environment }}
             - Artifact ID: ${{ inputs.artifact-id }}
             - Image: tejasdesai27/banking-app:${{ steps.artifact-details.outputs.version }}
+            - Deployment Method: Helm Chart
             - Deployment Status: Success ✅
             - Run ID: ${{ cloudbees.run_id }}
             - Database URL: ${{ vars.DATABASE_URL }}
+            - API Port: ${{ vars.API_PORT }}
 
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
