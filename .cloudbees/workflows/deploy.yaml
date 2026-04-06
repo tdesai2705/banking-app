@@ -46,26 +46,10 @@ jobs:
         with:
           artifact-id: ${{ inputs.artifact-id }}
 
-      - name: Verify Kubernetes access with kubectl
-        uses: docker://bitnami/kubectl:latest
-        shell: sh
-        run: |
-          # Create kubeconfig from secret
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-          # Verify connection
-          echo "Verifying Kubernetes cluster connection..."
-          kubectl cluster-info
-
-          # Check if namespace exists
-          NAMESPACE="tejas-${{ inputs.environment }}"
-          if kubectl get namespace $NAMESPACE 2>/dev/null; then
-            echo "Namespace $NAMESPACE already exists"
-          else
-            echo "Namespace $NAMESPACE will be created by Helm"
-          fi
+      - name: Set kubeconfig
+        uses: cloudbees-days/setup-kubeconfig
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
 
       - name: Install Helm chart
         id: install-chart
@@ -83,31 +67,6 @@ jobs:
             env:
               springDatasourceUrl: ${{ vars.DATABASE_URL }}
               serverPort: ${{ vars.API_PORT }}
-
-      - name: Verify deployment with kubectl
-        uses: docker://bitnami/kubectl:latest
-        shell: sh
-        run: |
-          # Set kubeconfig
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-          NAMESPACE="tejas-${{ inputs.environment }}"
-
-          echo "Checking deployment status..."
-          kubectl get deployments -n $NAMESPACE
-
-          echo "Waiting for rollout to complete..."
-          kubectl rollout status deployment/banking-app -n $NAMESPACE --timeout=5m
-
-          echo "Getting pod status..."
-          kubectl get pods -n $NAMESPACE -l app=banking-app
-
-          echo "Getting service details..."
-          kubectl get service banking-app -n $NAMESPACE
-
-          echo "Deployment successful to $NAMESPACE!"
 
       - name: Publish deployment evidence
         uses: cloudbees-io/publish-evidence-item@v1
