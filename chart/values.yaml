@@ -1,6 +1,7 @@
 replicaCount: 2
 
 image:
+  url: tejasdesai27/banking-app:latest
   repository: tejasdesai27/banking-app
   pullPolicy: IfNotPresent
   tag: "latest"

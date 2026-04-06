@@ -12,6 +12,10 @@ on:
         required: true
         type: string
         description: The artifact ID to deploy
+      artifact-url:
+        required: true
+        type: string
+        description: The artifact URL (Docker image)
       environment:
         required: true
         type: string
@@ -22,6 +26,10 @@ on:
         required: true
         type: string
         description: The artifact ID to deploy
+      artifact-url:
+        required: true
+        type: string
+        description: The artifact URL (Docker image)
       environment:
         required: true
         type: string
@@ -40,12 +48,6 @@ jobs:
       - name: Checkout code
         uses: cloudbees-io/checkout@v1
 
-      - name: Get artifact details
-        id: artifact-details
-        uses: cloudbees-io/get-artifact-details@v1
-        with:
-          artifact-id: ${{ inputs.artifact-id }}
-
       - name: Set kubeconfig
         uses: cloudbees-days/setup-kubeconfig
         with:
@@ -61,8 +63,7 @@ jobs:
           create-namespace: true
           values: |
             image:
-              repository: tejasdesai27/banking-app
-              tag: ${{ steps.artifact-details.outputs.version }}
+              url: ${{ inputs.artifact-url }}
               pullPolicy: IfNotPresent
             env:
               springDatasourceUrl: ${{ vars.DATABASE_URL }}
@@ -77,15 +78,15 @@ jobs:
             - Namespace: tejas-${{ inputs.environment }}
             - Release Name: banking-app-${{ inputs.environment }}
             - Artifact ID: ${{ inputs.artifact-id }}
-            - Image: tejasdesai27/banking-app:${{ steps.artifact-details.outputs.version }}
+            - Image: ${{ inputs.artifact-url }}
             - Deployment Method: Helm Chart
             - Deployment Status: Success ✅
             - Run ID: ${{ cloudbees.run_id }}
             - Database URL: ${{ vars.DATABASE_URL }}
             - API Port: ${{ vars.API_PORT }}
+          format: MARKDOWN
 
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
           artifact-id: ${{ inputs.artifact-id }}
-          target-environment: ${{ inputs.environment }}
