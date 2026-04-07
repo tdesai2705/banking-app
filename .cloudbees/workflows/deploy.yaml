@@ -47,6 +47,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: cloudbees-io/checkout@v1
+        with:
+          repository: tdesai2705/banking-app
 
       - name: Set kubeconfig
         uses: cloudbees-days/setup-kubeconfig
