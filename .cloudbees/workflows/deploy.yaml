@@ -64,9 +64,6 @@ jobs:
             image:
               url: ${{ inputs.artifact-url }}
               pullPolicy: IfNotPresent
-            env:
-              springDatasourceUrl: ${{ vars.DATABASE_URL }}
-              serverPort: ${{ vars.API_PORT }}
 
       - name: Publish deployment evidence
         uses: cloudbees-io/publish-evidence-item@v1
@@ -81,8 +78,6 @@ jobs:
             - Deployment Method: Helm Chart
             - Deployment Status: Success ✅
             - Run ID: ${{ cloudbees.run_id }}
-            - Database URL: ${{ vars.DATABASE_URL }}
-            - API Port: ${{ vars.API_PORT }}
           format: MARKDOWN
 
       - name: Register deployed artifact
