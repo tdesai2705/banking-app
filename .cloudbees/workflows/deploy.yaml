@@ -60,7 +60,6 @@ jobs:
           chart-location: ${{ cloudbees.workspace }}/chart
           release-name: banking-app-${{ inputs.environment }}
           namespace: tejas-${{ inputs.environment }}
-          create-namespace: true
           values: |
             image:
               url: ${{ inputs.artifact-url }}
