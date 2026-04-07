@@ -62,7 +62,7 @@ jobs:
         with:
           chart-location: ${{ cloudbees.workspace }}/chart
           release-name: banking-app-${{ inputs.environment }}
-          namespace: tejas-${{ inputs.environment }}
+          namespace: ${{ vars.namespace }}
           values: |
             image:
               url: ${{ inputs.artifact-url }}
@@ -74,7 +74,7 @@ jobs:
           content: |-
             ## Deployment Evidence - Banking App
             - Environment: ${{ inputs.environment }}
-            - Namespace: tejas-${{ inputs.environment }}
+            - Namespace: ${{ vars.namespace }}
             - Release Name: banking-app-${{ inputs.environment }}
             - Artifact ID: ${{ inputs.artifact-id }}
             - Image: ${{ inputs.artifact-url }}
