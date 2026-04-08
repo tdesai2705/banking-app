@@ -27,13 +27,31 @@ jobs:
       - name: Checkout code
         uses: cloudbees-io/checkout@v1
 
-      # Step 2: Run tests using custom action
+      # Step 2: Smart Tests - Analyze code changes
+      - name: Analyze code changes with Smart Tests
+        uses: cloudbees-io/smart-tests-analyze@v1
+        id: smart-tests-analyze
+        with:
+          api-token: ${{ secrets.CLOUDBEES_API_TOKEN }}
+          scm-provider: github
+          component-id: banking-app
+
+      # Step 3: Run tests using custom action
       - name: Run tests and publish results
         uses: ./.cloudbees/actions/run-tests
         with:
           working-directory: "."
+          test-selection: ${{ steps.smart-tests-analyze.outputs.test-selection }}
 
-      # Step 3: Extract test summary
+      # Step 4: Upload test results to Smart Tests
+      - name: Upload test results to Smart Tests
+        uses: cloudbees-io/smart-tests-upload@v1
+        with:
+          api-token: ${{ secrets.CLOUDBEES_API_TOKEN }}
+          component-id: banking-app
+          test-reports-path: target/surefire-reports
+
+      # Step 5: Extract test summary
       - name: Extract test summary
         id: test-summary
         uses: docker://alpine:latest
@@ -54,7 +72,7 @@ jobs:
           echo "$PASSED" > $CLOUDBEES_OUTPUTS/PASSED_TESTS
           echo "$FAILURES" > $CLOUDBEES_OUTPUTS/FAILED_TESTS
 
-      # Step 4: Publish test evidence
+      # Step 6: Publish test evidence
       - name: Publish test evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:

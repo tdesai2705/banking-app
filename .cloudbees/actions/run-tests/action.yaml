@@ -7,6 +7,9 @@ inputs:
   working-directory:
     description: Directory containing the pom.xml
     default: "."
+  test-selection:
+    description: Smart Tests selection (comma-separated test class names or empty for all tests)
+    default: ""
 
 runs:
   steps:
@@ -15,10 +18,22 @@ runs:
       shell: sh
       run: |
         cd ${{ inputs.working-directory }}
-        mvn test \
-          -Dmaven.test.failure.ignore=true \
-          -Dsurefire.reportFormat=xml \
-          -q
+        TEST_SELECTION="${{ inputs.test-selection }}"
+
+        if [ -z "$TEST_SELECTION" ] || [ "$TEST_SELECTION" = "all" ]; then
+          echo "Running all tests (observation mode)"
+          mvn test \
+            -Dmaven.test.failure.ignore=true \
+            -Dsurefire.reportFormat=xml \
+            -q
+        else
+          echo "Running Smart Tests selection: $TEST_SELECTION"
+          mvn test \
+            -Dtest="$TEST_SELECTION" \
+            -Dmaven.test.failure.ignore=true \
+            -Dsurefire.reportFormat=xml \
+            -q
+        fi
         echo "Tests completed"
 
     - name: Publish test results
