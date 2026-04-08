@@ -23,7 +23,7 @@ jobs:
   # Job 1: Test
   test:
     env:
-      SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_TOKEN }}
+      LAUNCHABLE_TOKEN: ${{ secrets.SMART_TESTS_TOKEN }}
 
     steps:
       # Step 1: Checkout code
