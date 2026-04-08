@@ -20,8 +20,19 @@ public class AccountService {
 
     public Account create(Account account) { return repo.save(account); }
 
+    public Account createAccount(String ownerName, BigDecimal balance) {
+        Account account = new Account(ownerName, balance);
+        return repo.save(account);
+    }
+
+    public List<Account> findByOwnerName(String ownerName) {
+        return repo.findByOwnerName(ownerName);
+    }
+
     @Transactional
     public Account deposit(Long id, BigDecimal amount) {
+        if (amount == null)
+            throw new IllegalArgumentException("Deposit amount cannot be null");
         Account acc = repo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Account not found: " + id));
         if (amount.compareTo(BigDecimal.ZERO) <= 0)
@@ -32,6 +43,8 @@ public class AccountService {
 
     @Transactional
     public Account withdraw(Long id, BigDecimal amount) {
+        if (amount == null)
+            throw new IllegalArgumentException("Withdrawal amount cannot be null");
         Account acc = repo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Account not found: " + id));
         if (amount.compareTo(BigDecimal.ZERO) <= 0)

@@ -62,4 +62,63 @@ class AccountServiceTest {
         when(repo.findById(99L)).thenReturn(Optional.empty());
         assertTrue(service.findById(99L).isEmpty());
     }
+
+    @Test void withdrawThrowsOnNegativeAmount() {
+        Account acc = sampleAccount();
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        assertThrows(IllegalArgumentException.class,
+            () -> service.withdraw(1L, new BigDecimal("-50.00")));
+    }
+
+    @Test void withdrawThrowsOnNullAmount() {
+        Account acc = sampleAccount();
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        assertThrows(IllegalArgumentException.class,
+            () -> service.withdraw(1L, null));
+    }
+
+    @Test void depositThrowsOnNullAmount() {
+        Account acc = sampleAccount();
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        assertThrows(IllegalArgumentException.class,
+            () -> service.deposit(1L, null));
+    }
+
+    @Test void withdrawExactBalance() {
+        Account acc = sampleAccount();
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
+        Account result = service.withdraw(1L, new BigDecimal("500.00"));
+        assertEquals(new BigDecimal("0.00"), result.getBalance());
+    }
+
+    @Test void createAccountWithZeroBalance() {
+        Account acc = new Account("Bob", BigDecimal.ZERO);
+        when(repo.save(any())).thenReturn(acc);
+        Account result = service.createAccount("Bob", BigDecimal.ZERO);
+        assertNotNull(result);
+        assertEquals(BigDecimal.ZERO, result.getBalance());
+    }
+
+    @Test void depositZeroAmount() {
+        Account acc = sampleAccount();
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        assertThrows(IllegalArgumentException.class,
+            () -> service.deposit(1L, BigDecimal.ZERO));
+    }
+
+    @Test void withdrawZeroAmount() {
+        Account acc = sampleAccount();
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        assertThrows(IllegalArgumentException.class,
+            () -> service.withdraw(1L, BigDecimal.ZERO));
+    }
+
+    @Test void findAccountByOwnerName() {
+        Account acc = sampleAccount();
+        when(repo.findByOwnerName("Alice")).thenReturn(java.util.Arrays.asList(acc));
+        var accounts = service.findByOwnerName("Alice");
+        assertEquals(1, accounts.size());
+        assertEquals("Alice", accounts.get(0).getOwnerName());
+    }
 }
