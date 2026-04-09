@@ -41,12 +41,12 @@ class TransactionServiceTest {
         sourceAccount = new Account();
         sourceAccount.setId(1L);
         sourceAccount.setAccountNumber("ACC001");
-        sourceAccount.setBalance(1000.0);
+        sourceAccount.setBalance(new BigDecimal("1000.0"));
 
         destinationAccount = new Account();
         destinationAccount.setId(2L);
         destinationAccount.setAccountNumber("ACC002");
-        destinationAccount.setBalance(500.0);
+        destinationAccount.setBalance(new BigDecimal("500.0"));
     }
 
     @Test
