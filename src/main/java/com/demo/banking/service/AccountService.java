@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AccountService {
@@ -22,6 +23,8 @@ public class AccountService {
 
     public Account createAccount(String ownerName, BigDecimal balance) {
         Account account = new Account(ownerName, balance);
+        // Generate a unique account number
+        account.setAccountNumber("ACC" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         return repo.save(account);
     }
 

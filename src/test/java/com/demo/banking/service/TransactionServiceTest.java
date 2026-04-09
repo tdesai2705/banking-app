@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -60,8 +61,8 @@ class TransactionServiceTest {
 
         // Assert
         assertNotNull(transaction);
-        assertEquals(800.0, sourceAccount.getBalance());
-        assertEquals(700.0, destinationAccount.getBalance());
+        assertEquals(new BigDecimal("800.0"), sourceAccount.getBalance());
+        assertEquals(new BigDecimal("700.0"), destinationAccount.getBalance());
         assertEquals("TRANSFER", transaction.getType());
         verify(accountRepository, times(2)).save(any(Account.class));
         verify(transactionRepository, times(1)).save(any(Transaction.class));
@@ -106,11 +107,7 @@ class TransactionServiceTest {
 
     @Test
     void testTransferMoney_NegativeAmount() {
-        // Arrange
-        when(accountRepository.findByAccountNumber("ACC001")).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByAccountNumber("ACC002")).thenReturn(Optional.of(destinationAccount));
-
-        // Act & Assert
+        // Act & Assert - amount validation happens before repository access
         assertThrows(IllegalArgumentException.class, () -> {
             transactionService.transferMoney("ACC001", "ACC002", -100.0);
         });
@@ -118,11 +115,7 @@ class TransactionServiceTest {
 
     @Test
     void testTransferMoney_ZeroAmount() {
-        // Arrange
-        when(accountRepository.findByAccountNumber("ACC001")).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByAccountNumber("ACC002")).thenReturn(Optional.of(destinationAccount));
-
-        // Act & Assert
+        // Act & Assert - amount validation happens before repository access
         assertThrows(IllegalArgumentException.class, () -> {
             transactionService.transferMoney("ACC001", "ACC002", 0.0);
         });
@@ -139,7 +132,7 @@ class TransactionServiceTest {
 
         // Assert
         assertNotNull(transaction);
-        assertEquals(1500.0, sourceAccount.getBalance());
+        assertEquals(new BigDecimal("1500.0"), sourceAccount.getBalance());
         assertEquals("DEPOSIT", transaction.getType());
         assertEquals(500.0, transaction.getAmount());
         verify(accountRepository, times(1)).save(sourceAccount);
@@ -159,10 +152,7 @@ class TransactionServiceTest {
 
     @Test
     void testDeposit_NegativeAmount() {
-        // Arrange
-        when(accountRepository.findByAccountNumber("ACC001")).thenReturn(Optional.of(sourceAccount));
-
-        // Act & Assert
+        // Act & Assert - amount validation happens before repository access
         assertThrows(IllegalArgumentException.class, () -> {
             transactionService.deposit("ACC001", -100.0);
         });
@@ -179,7 +169,7 @@ class TransactionServiceTest {
 
         // Assert
         assertNotNull(transaction);
-        assertEquals(700.0, sourceAccount.getBalance());
+        assertEquals(new BigDecimal("700.0"), sourceAccount.getBalance());
         assertEquals("WITHDRAWAL", transaction.getType());
         assertEquals(300.0, transaction.getAmount());
         verify(accountRepository, times(1)).save(sourceAccount);

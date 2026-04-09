@@ -249,6 +249,10 @@ class BankingIntegrationTest {
     void testConcurrentAccountOperations() {
         Long accountId = testAccount1.getId();
 
+        // Get initial balance from database (in case other tests modified it)
+        Account initialAccount = accountRepository.findById(accountId).orElseThrow();
+        BigDecimal initialBalance = initialAccount.getBalance();
+
         // Simulate multiple operations that should maintain consistency
         accountService.deposit(accountId, new BigDecimal("100.00"));
         Account intermediate = accountRepository.findById(accountId).orElseThrow();
@@ -256,7 +260,7 @@ class BankingIntegrationTest {
 
         // Verify final state is consistent
         Account finalAccount = accountRepository.findById(accountId).orElseThrow();
-        BigDecimal expected = testAccount1.getBalance()
+        BigDecimal expected = initialBalance
                 .add(new BigDecimal("100.00"))
                 .subtract(new BigDecimal("50.00"));
         assertEquals(expected, finalAccount.getBalance());

@@ -71,15 +71,13 @@ class AccountServiceTest {
     }
 
     @Test void withdrawThrowsOnNullAmount() {
-        Account acc = sampleAccount();
-        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        // Amount validation happens before repository access
         assertThrows(IllegalArgumentException.class,
             () -> service.withdraw(1L, null));
     }
 
     @Test void depositThrowsOnNullAmount() {
-        Account acc = sampleAccount();
-        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        // Amount validation happens before repository access
         assertThrows(IllegalArgumentException.class,
             () -> service.deposit(1L, null));
     }

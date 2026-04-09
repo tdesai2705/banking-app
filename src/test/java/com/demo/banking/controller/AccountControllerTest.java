@@ -52,6 +52,7 @@ class AccountControllerTest {
 
     @Test void createAccount() throws Exception {
         Account a = new Account("Carol", new BigDecimal("250.00"));
+        a.setAccountNumber("ACCTEST123");
         when(service.create(any())).thenReturn(a);
         mvc.perform(post("/api/accounts")
                .contentType(MediaType.APPLICATION_JSON)
@@ -111,7 +112,7 @@ class AccountControllerTest {
         mvc.perform(post("/api/accounts/1/deposit")
                .contentType(MediaType.APPLICATION_JSON)
                .content(mapper.writeValueAsString(depositRequest)))
-           .andExpect(status().is5xxServerError());
+           .andExpect(status().isBadRequest());
     }
 
     @Test void withdrawWithInsufficientFundsThrowsError() throws Exception {
@@ -124,6 +125,6 @@ class AccountControllerTest {
         mvc.perform(post("/api/accounts/1/withdraw")
                .contentType(MediaType.APPLICATION_JSON)
                .content(mapper.writeValueAsString(withdrawRequest)))
-           .andExpect(status().is5xxServerError());
+           .andExpect(status().isBadRequest());
     }
 }
