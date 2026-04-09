@@ -54,3 +54,5 @@ This project includes:
 - Main CI pipeline (`.cloudbees/workflows/ci.yaml`)
 
 The CI pipeline runs on push to main/develop and on pull requests to main.
+
+<!-- Smart Tests integration with correct API token - Thu Apr  9 20:05:24 IST 2026 -->
