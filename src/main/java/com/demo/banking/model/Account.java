@@ -1,17 +1,20 @@
 package com.demo.banking.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "accounts")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @JsonProperty(access = JsonProperty.Access.READ_WRITE)
     @Column(unique = true)
     private String accountNumber;
 
@@ -53,5 +56,12 @@ public class Account {
     // Helper method to set balance from Double
     public void setBalance(Double balance) {
         this.balance = balance != null ? BigDecimal.valueOf(balance) : BigDecimal.ZERO;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.accountNumber == null || this.accountNumber.isBlank()) {
+            this.accountNumber = "ACC" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
     }
 }

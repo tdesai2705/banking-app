@@ -54,9 +54,12 @@ class AccountControllerTest {
         Account a = new Account("Carol", new BigDecimal("250.00"));
         a.setAccountNumber("ACCTEST123");
         when(service.create(any())).thenReturn(a);
+
+        String json = "{\"ownerName\":\"Carol\",\"balance\":250.00,\"accountNumber\":\"ACCTEST123\"}";
+
         mvc.perform(post("/api/accounts")
                .contentType(MediaType.APPLICATION_JSON)
-               .content(mapper.writeValueAsString(a)))
+               .content(json))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.ownerName").value("Carol"));
     }
