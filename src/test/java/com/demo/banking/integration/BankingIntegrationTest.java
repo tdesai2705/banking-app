@@ -112,7 +112,12 @@ class BankingIntegrationTest {
         newUser.setEmail("newuser@test.com");
         newUser.setPassword("pass123");
         newUser.setFullName("New User");
-        User createdUser = userService.createUser(newUser);
+        User createdUser = userService.createUser(
+            newUser.getUsername(),
+            newUser.getEmail(),
+            newUser.getPassword(),
+            newUser.getFullName()
+        );
 
         assertNotNull(createdUser.getId());
         assertEquals("newuser", createdUser.getUsername());
@@ -167,7 +172,11 @@ class BankingIntegrationTest {
         // Update user details
         testUser.setFullName("Updated Name");
         testUser.setEmail("updated@test.com");
-        User updated = userService.updateUser(testUser.getId(), testUser);
+        User updated = userService.updateUser(
+            testUser.getId(),
+            testUser.getEmail(),
+            testUser.getFullName()
+        );
 
         assertEquals("Updated Name", updated.getFullName());
         assertEquals("updated@test.com", updated.getEmail());
@@ -220,7 +229,12 @@ class BankingIntegrationTest {
         newUser.setEmail("temp@test.com");
         newUser.setPassword("temp123");
         newUser.setFullName("Temp User");
-        User created = userService.createUser(newUser);
+        User created = userService.createUser(
+            newUser.getUsername(),
+            newUser.getEmail(),
+            newUser.getPassword(),
+            newUser.getFullName()
+        );
 
         Long userId = created.getId();
         userService.deleteUser(userId);
