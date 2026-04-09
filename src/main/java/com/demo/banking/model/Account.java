@@ -53,11 +53,6 @@ public class Account {
         return balance != null ? balance.doubleValue() : 0.0;
     }
 
-    // Helper method to set balance from Double
-    public void setBalance(Double balance) {
-        this.balance = balance != null ? BigDecimal.valueOf(balance) : BigDecimal.ZERO;
-    }
-
     @PrePersist
     protected void onCreate() {
         if (this.accountNumber == null || this.accountNumber.isBlank()) {
