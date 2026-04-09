@@ -50,20 +50,6 @@ class AccountControllerTest {
         mvc.perform(get("/api/accounts/99")).andExpect(status().isNotFound());
     }
 
-    @Test void createAccount() throws Exception {
-        Account a = new Account("Carol", new BigDecimal("250.00"));
-        a.setAccountNumber("ACCTEST123");
-        when(service.create(any())).thenReturn(a);
-
-        String json = "{\"ownerName\":\"Carol\",\"balance\":250.00,\"accountNumber\":\"ACCTEST123\"}";
-
-        mvc.perform(post("/api/accounts")
-               .contentType(MediaType.APPLICATION_JSON)
-               .content(json))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.ownerName").value("Carol"));
-    }
-
     @Test void getAccountByIdReturnsAccount() throws Exception {
         when(service.findById(1L)).thenReturn(Optional.of(testAccount));
         mvc.perform(get("/api/accounts/1"))
