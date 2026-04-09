@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,6 +28,8 @@ public class TransactionService {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
 
+        BigDecimal amountBD = BigDecimal.valueOf(amount);
+
         // Get source account
         Account sourceAccount = accountRepository.findByAccountNumber(sourceAccountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Source account not found: " + sourceAccountNumber));
@@ -36,13 +39,13 @@ public class TransactionService {
                 .orElseThrow(() -> new IllegalArgumentException("Destination account not found: " + destinationAccountNumber));
 
         // Check sufficient balance
-        if (sourceAccount.getBalance() < amount) {
+        if (sourceAccount.getBalance().compareTo(amountBD) < 0) {
             throw new IllegalArgumentException("Insufficient balance in source account");
         }
 
         // Perform transfer
-        sourceAccount.setBalance(sourceAccount.getBalance() - amount);
-        destinationAccount.setBalance(destinationAccount.getBalance() + amount);
+        sourceAccount.setBalance(sourceAccount.getBalance().subtract(amountBD));
+        destinationAccount.setBalance(destinationAccount.getBalance().add(amountBD));
 
         // Save updated accounts
         accountRepository.save(sourceAccount);
@@ -67,12 +70,14 @@ public class TransactionService {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
 
+        BigDecimal amountBD = BigDecimal.valueOf(amount);
+
         // Get account
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found: " + accountNumber));
 
         // Perform deposit
-        account.setBalance(account.getBalance() + amount);
+        account.setBalance(account.getBalance().add(amountBD));
         accountRepository.save(account);
 
         // Create transaction record
@@ -93,17 +98,19 @@ public class TransactionService {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
 
+        BigDecimal amountBD = BigDecimal.valueOf(amount);
+
         // Get account
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found: " + accountNumber));
 
         // Check sufficient balance
-        if (account.getBalance() < amount) {
+        if (account.getBalance().compareTo(amountBD) < 0) {
             throw new IllegalArgumentException("Insufficient balance");
         }
 
         // Perform withdrawal
-        account.setBalance(account.getBalance() - amount);
+        account.setBalance(account.getBalance().subtract(amountBD));
         accountRepository.save(account);
 
         // Create transaction record
