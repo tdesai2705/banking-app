@@ -103,4 +103,11 @@ jobs:
             - Run ID: ${{ cloudbees.run_id }}
           format: MARKDOWN
 
-# Cache buster: 1775833352
+      - name: Register deployed artifact
+        uses: cloudbees-io/register-deployed-artifact@v2
+        continue-on-error: true
+        with:
+          artifact-id: ${{ inputs.artifact-id }}
+          target-environment: ${{ inputs.environment }}
+
+# Cache buster: 1775833600 - Added back artifact registration with continue-on-error
