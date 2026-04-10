@@ -80,7 +80,7 @@ jobs:
 
           # Use helm upgrade --install (idempotent) with longer timeout
           helm upgrade --install banking-app ./chart \
-            --namespace ${{ vars.namespace }} \
+            --namespace ${{ vars.NAMESPACE }} \
             --values /tmp/values.yaml \
             --timeout 10m \
             --debug
