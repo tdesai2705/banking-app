@@ -56,17 +56,37 @@ jobs:
         with:
           kubeconfig: ${{ secrets.KUBECONFIG }}
 
-      - name: Install Helm chart
-        id: install-chart
-        uses: cloudbees-io/helm-install@v1
-        with:
-          chart-location: ${{ cloudbees.workspace }}/chart
-          release-name: banking-app-${{ inputs.environment }}
-          namespace: ${{ vars.NAMESPACE }}
-          values: |
-            image:
-              url: ${{ inputs.artifact-url }}
-              pullPolicy: IfNotPresent
+      # - name: Install Helm chart
+      #   id: install-chart
+      #   uses: cloudbees-io/helm-install@v1
+      #   with:
+      #     chart-location: ${{ cloudbees.workspace }}/chart
+      #     release-name: banking-app-${{ inputs.environment }}
+      #     namespace: ${{ vars.NAMESPACE }}
+      #     values: |
+      #       image:
+      #         url: ${{ inputs.artifact-url }}
+      #         pullPolicy: IfNotPresent
+      - name: Install helm chart
+        uses: docker://alpine/helm:latest
+        shell: sh
+        run: |
+          # Create values file
+          cat > /tmp/values.yaml <<EOF
+          image:
+            url: ${{ inputs.artifact-url }}
+            pullPolicy: IfNotPresent
+          EOF
+
+          # Use helm upgrade --install (idempotent) with longer timeout
+          helm upgrade --install banking-app ./chart \
+            --namespace ${{ vars.namespace }} \
+            --values /tmp/values.yaml \
+            --timeout 10m \
+            --debug
+
+          echo "✅ Helm deployment initiated!"
+          echo "Note: Deployment may still be rolling out. Checking status..."
 
       - name: Publish deployment evidence
         uses: cloudbees-io/publish-evidence-item@v1
