@@ -105,6 +105,7 @@ jobs:
 
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
+        continue-on-error: true
         with:
           artifact-id: ${{ inputs.artifact-id }}
           target-environment: ${{ inputs.environment }}
