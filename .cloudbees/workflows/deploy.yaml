@@ -107,3 +107,4 @@ jobs:
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
           artifact-id: ${{ inputs.artifact-id }}
+          target-environment: ${{ inputs.environment }}
