@@ -19,13 +19,6 @@ on:
         required: false
         type: string
         default: '.'
-    outputs:
-      artifact-id:
-        description: CloudBees artifact ID
-        value: ${{ jobs.build-and-push.outputs.artifact-id }}
-      artifact-url:
-        description: Docker image URL
-        value: ${{ jobs.build-and-push.outputs.artifact-url }}
   workflow_dispatch:
     inputs:
       image-tag:
@@ -42,9 +35,6 @@ permissions:
 
 jobs:
   build-and-push:
-    outputs:
-      artifact-id: ${{ steps.register-artifact.outputs.artifact-id }}
-      artifact-url: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }}
     steps:
       # Step 1: Checkout code
       - name: Checkout code
@@ -70,18 +60,7 @@ jobs:
           dockerfile: ${{ inputs.dockerfile-path }}
           verbosity: info
 
-      # Step 4: Register artifact
-      - name: Register artifact
-        id: register-artifact
-        uses: cloudbees-io/register-artifact@v1
-        with:
-          name: ${{ inputs.image-name }}
-          version: ${{ cloudbees.scm.sha }}
-          registry-url: https://index.docker.io
-          artifact-url: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }}
-          artifact-type: container
-
-      # Step 5: Publish build evidence
+      # Step 4: Publish build evidence
       - name: Publish build evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -93,5 +72,4 @@ jobs:
             - Docker Image: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ cloudbees.scm.sha }}
             - Also tagged as: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:latest
             - Image Digest: ${{ steps.kaniko-build.outputs.digest }}
-            - Artifact ID: ${{ steps.register-artifact.outputs.artifact-id }}
             - Build Status: Successfully built and pushed to Docker Hub ✅
