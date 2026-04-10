@@ -1,6 +1,6 @@
 # CloudBees Unify Deploy Workflow
 # Deploys Banking App to Kubernetes
-# Updated: 2026-04-07 20:20 - Namespace fix
+# Updated: 2026-04-10 20:35 - Removed artifact registration (not available in CloudBees)
 
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
@@ -102,3 +102,5 @@ jobs:
             - Deployment Status: Success ✅
             - Run ID: ${{ cloudbees.run_id }}
           format: MARKDOWN
+
+# Cache buster: 1775833352
