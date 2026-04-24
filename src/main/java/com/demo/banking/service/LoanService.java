@@ -31,6 +31,14 @@ public class LoanService {
             throw new IllegalArgumentException("Loan amount must be greater than zero");
         }
 
+        // Validate minimum and maximum loan amounts
+        if (amount < 1000) {
+            throw new IllegalArgumentException("Minimum loan amount is $1,000");
+        }
+        if (amount > 1000000) {
+            throw new IllegalArgumentException("Maximum loan amount is $1,000,000");
+        }
+
         // Validate term
         if (termMonths == null || termMonths <= 0) {
             throw new IllegalArgumentException("Loan term must be greater than zero");
