@@ -22,6 +22,17 @@ public class AccountService {
     public Account create(Account account) { return repo.save(account); }
 
     public Account createAccount(String ownerName, BigDecimal balance) {
+        // Validate owner name
+        if (ownerName == null || ownerName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Owner name cannot be empty");
+        }
+        if (ownerName.length() < 2) {
+            throw new IllegalArgumentException("Owner name must be at least 2 characters");
+        }
+        if (ownerName.length() > 100) {
+            throw new IllegalArgumentException("Owner name cannot exceed 100 characters");
+        }
+
         // Validate minimum initial balance
         BigDecimal minimumBalance = new BigDecimal("100.00");
         if (balance.compareTo(minimumBalance) < 0) {
