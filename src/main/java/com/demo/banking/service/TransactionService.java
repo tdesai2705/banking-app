@@ -132,7 +132,13 @@ public class TransactionService {
         transaction.setType("WITHDRAWAL");
         transaction.setAmount(amount);
         transaction.setTimestamp(LocalDateTime.now());
-        transaction.setDescription("Withdrawal");
+
+        // Enhanced description based on amount
+        String description = "ATM Withdrawal";
+        if (amountBD.compareTo(new BigDecimal("1000.00")) > 0) {
+            description = "Large Withdrawal (Teller)";
+        }
+        transaction.setDescription(description);
 
         return transactionRepository.save(transaction);
     }
