@@ -56,7 +56,15 @@ public class AccountService {
             .orElseThrow(() -> new IllegalArgumentException("Account not found: " + id));
         if (amount.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Deposit amount must be positive");
-        acc.setBalance(acc.getBalance().add(amount));
+
+        // Check if deposit would exceed maximum balance
+        BigDecimal maxBalance = new BigDecimal("1000000.00");
+        BigDecimal newBalance = acc.getBalance().add(amount);
+        if (newBalance.compareTo(maxBalance) > 0) {
+            throw new IllegalArgumentException("Deposit would exceed maximum account balance of $1,000,000");
+        }
+
+        acc.setBalance(newBalance);
         return repo.save(acc);
     }
 
