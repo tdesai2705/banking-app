@@ -30,6 +30,13 @@ public class TransactionService {
 
         BigDecimal amountBD = BigDecimal.valueOf(amount);
 
+        // Apply transfer fee for amounts over $1000
+        BigDecimal transferFee = BigDecimal.ZERO;
+        if (amountBD.compareTo(new BigDecimal("1000.00")) > 0) {
+            transferFee = new BigDecimal("2.50");
+        }
+        BigDecimal totalAmount = amountBD.add(transferFee);
+
         // Get source account
         Account sourceAccount = accountRepository.findByAccountNumber(sourceAccountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Source account not found: " + sourceAccountNumber));
@@ -38,13 +45,13 @@ public class TransactionService {
         Account destinationAccount = accountRepository.findByAccountNumber(destinationAccountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Destination account not found: " + destinationAccountNumber));
 
-        // Check sufficient balance
-        if (sourceAccount.getBalance().compareTo(amountBD) < 0) {
-            throw new IllegalArgumentException("Insufficient balance in source account");
+        // Check sufficient balance (including fee)
+        if (sourceAccount.getBalance().compareTo(totalAmount) < 0) {
+            throw new IllegalArgumentException("Insufficient balance in source account (including $2.50 fee for large transfers)");
         }
 
         // Perform transfer
-        sourceAccount.setBalance(sourceAccount.getBalance().subtract(amountBD));
+        sourceAccount.setBalance(sourceAccount.getBalance().subtract(totalAmount));
         destinationAccount.setBalance(destinationAccount.getBalance().add(amountBD));
 
         // Save updated accounts
