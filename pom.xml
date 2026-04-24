@@ -50,6 +50,8 @@
         <configuration>
           <reportFormat>plain</reportFormat>
           <useFile>false</useFile>
+          <!-- Generate XML reports for Smart Tests -->
+          <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
         </configuration>
       </plugin>
     </plugins>

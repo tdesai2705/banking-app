@@ -51,21 +51,27 @@ jobs:
           smart-tests record session --build ${{ cloudbees.run_id }} --observation --test-suite banking-app-tests > session.txt
           cat session.txt
 
-      # Step 5: Run all tests (observation mode to build Smart Tests knowledge)
+      # Step 5: Download dependencies and compile
+      - name: Download dependencies and compile
+        uses: docker://maven:3.9-eclipse-temurin-17
+        run: |
+          mvn clean compile test-compile -DskipTests
+
+      # Step 6: Run all tests (observation mode to build Smart Tests knowledge)
       - name: Run all tests (observation mode)
         uses: docker://maven:3.9-eclipse-temurin-17
         kind: test
         run: |
-          mvn test
+          mvn surefire:test
 
-      # Step 6: Record test results with Smart Tests
+      # Step 7: Record test results with Smart Tests
       - name: Record test results with Smart Tests
         uses: docker://cloudbeesdemo/maven-st:v1
         if: ${{always()}}
         run: |
           smart-tests record tests maven --session @session.txt "**/target/surefire-reports"
 
-      # Step 7: Extract test summary
+      # Step 8: Extract test summary
       - name: Extract test summary
         id: test-summary
         uses: docker://alpine:latest
@@ -86,7 +92,7 @@ jobs:
           echo "$PASSED" > $CLOUDBEES_OUTPUTS/PASSED_TESTS
           echo "$FAILURES" > $CLOUDBEES_OUTPUTS/FAILED_TESTS
 
-      # Step 8: Publish test evidence
+      # Step 9: Publish test evidence
       - name: Publish test evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
