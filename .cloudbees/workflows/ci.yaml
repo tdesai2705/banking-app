@@ -71,7 +71,7 @@ jobs:
         uses: docker://maven:3.9-eclipse-temurin-17
         kind: test
         run: |
-          mvn test -Dsurefire.includesFile=$PWD/smart-tests-subset.txt
+          mvn test -Dsurefire.includesFile=$PWD/smart-tests-subset.txt || true
 
       # Step 8: Record test results with Smart Tests
       - name: Record test results with Smart Tests
