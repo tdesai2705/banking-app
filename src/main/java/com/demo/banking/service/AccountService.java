@@ -22,6 +22,11 @@ public class AccountService {
     public Account create(Account account) { return repo.save(account); }
 
     public Account createAccount(String ownerName, BigDecimal balance) {
+        // Validate minimum initial balance
+        BigDecimal minimumBalance = new BigDecimal("100.00");
+        if (balance.compareTo(minimumBalance) < 0) {
+            throw new IllegalArgumentException("Initial balance must be at least $100.00");
+        }
         Account account = new Account(ownerName, balance);
         // Generate a unique account number
         account.setAccountNumber("ACC" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
