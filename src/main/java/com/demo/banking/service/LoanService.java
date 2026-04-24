@@ -45,6 +45,9 @@ public class LoanService {
         }
 
         // Validate term range
+        if (termMonths < 6) {
+            throw new IllegalArgumentException("Minimum loan term is 6 months");
+        }
         if (termMonths > 360) {
             throw new IllegalArgumentException("Loan term cannot exceed 360 months (30 years)");
         }
