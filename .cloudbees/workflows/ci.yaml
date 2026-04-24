@@ -51,36 +51,21 @@ jobs:
           smart-tests record session --build ${{ cloudbees.run_id }} --observation --test-suite banking-app-tests > session.txt
           cat session.txt
 
-      # Step 5: Compile tests
-      - name: Compile tests
-        uses: docker://maven:3.9-eclipse-temurin-17
-        run: |
-          mvn test-compile
-
-      # Step 6: Create Smart Tests subset
-      - name: Create Smart Tests subset
-        uses: docker://cloudbeesdemo/maven-st:v1
-        run: |
-          find . -path '*/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst' -exec cat {} \; | \
-            grep "Test\.class$\|Tests\.class$" > filtered-tests.lst
-          smart-tests subset maven --session @session.txt --target 50% --test-compile-created-file filtered-tests.lst > smart-tests-subset.txt
-          cat smart-tests-subset.txt
-
-      # Step 7: Run tests with Smart Tests subset
-      - name: Run tests with Smart Tests subset
+      # Step 5: Run all tests (observation mode to build Smart Tests knowledge)
+      - name: Run all tests (observation mode)
         uses: docker://maven:3.9-eclipse-temurin-17
         kind: test
         run: |
-          mvn test -Dsurefire.includesFile=$PWD/smart-tests-subset.txt
+          mvn test
 
-      # Step 8: Record test results with Smart Tests
+      # Step 6: Record test results with Smart Tests
       - name: Record test results with Smart Tests
         uses: docker://cloudbeesdemo/maven-st:v1
         if: ${{always()}}
         run: |
           smart-tests record tests maven --session @session.txt "**/target/surefire-reports"
 
-      # Step 9: Extract test summary
+      # Step 7: Extract test summary
       - name: Extract test summary
         id: test-summary
         uses: docker://alpine:latest
@@ -101,7 +86,7 @@ jobs:
           echo "$PASSED" > $CLOUDBEES_OUTPUTS/PASSED_TESTS
           echo "$FAILURES" > $CLOUDBEES_OUTPUTS/FAILED_TESTS
 
-      # Step 10: Publish test evidence
+      # Step 8: Publish test evidence
       - name: Publish test evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
