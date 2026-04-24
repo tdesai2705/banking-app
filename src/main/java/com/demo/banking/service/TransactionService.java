@@ -79,6 +79,12 @@ public class TransactionService {
 
         BigDecimal amountBD = BigDecimal.valueOf(amount);
 
+        // Validate maximum single deposit
+        BigDecimal maxDeposit = new BigDecimal("10000.00");
+        if (amountBD.compareTo(maxDeposit) > 0) {
+            throw new IllegalArgumentException("Single deposit cannot exceed $10,000.00");
+        }
+
         // Get account
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found: " + accountNumber));
