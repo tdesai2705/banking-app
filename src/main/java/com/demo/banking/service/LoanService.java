@@ -36,11 +36,19 @@ public class LoanService {
             throw new IllegalArgumentException("Loan term must be greater than zero");
         }
 
+        // Validate term range
+        if (termMonths > 360) {
+            throw new IllegalArgumentException("Loan term cannot exceed 360 months (30 years)");
+        }
+
+        // Calculate interest rate based on loan amount and term
+        Double interestRate = calculateInterestRate(amount, termMonths);
+
         // Create loan application
         Loan loan = new Loan();
         loan.setUserId(userId);
         loan.setAmount(amount);
-        loan.setInterestRate(5.0); // Default interest rate
+        loan.setInterestRate(interestRate);
         loan.setTermMonths(termMonths);
         loan.setStatus("PENDING");
         loan.setAppliedAt(LocalDateTime.now());
@@ -96,5 +104,28 @@ public class LoanService {
     public Loan getLoanById(Long loanId) {
         return loanRepository.findById(loanId)
                 .orElseThrow(() -> new IllegalArgumentException("Loan not found with id: " + loanId));
+    }
+
+    private Double calculateInterestRate(Double amount, Integer termMonths) {
+        // Base rate
+        Double rate = 3.5;
+
+        // Add premium for larger amounts
+        if (amount > 500000) {
+            rate += 1.5;
+        } else if (amount > 200000) {
+            rate += 1.0;
+        } else if (amount > 50000) {
+            rate += 0.5;
+        }
+
+        // Add premium for longer terms
+        if (termMonths > 240) {
+            rate += 1.0;
+        } else if (termMonths > 120) {
+            rate += 0.5;
+        }
+
+        return rate;
     }
 }
