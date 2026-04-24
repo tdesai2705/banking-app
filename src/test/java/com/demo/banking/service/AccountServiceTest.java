@@ -91,11 +91,9 @@ class AccountServiceTest {
     }
 
     @Test void createAccountWithZeroBalance() {
-        Account acc = new Account("Bob", BigDecimal.ZERO);
-        when(repo.save(any())).thenReturn(acc);
-        Account result = service.createAccount("Bob", BigDecimal.ZERO);
-        assertNotNull(result);
-        assertEquals(BigDecimal.ZERO, result.getBalance());
+        // Should now throw exception due to minimum balance requirement
+        assertThrows(IllegalArgumentException.class,
+            () -> service.createAccount("Bob", BigDecimal.ZERO));
     }
 
     @Test void depositZeroAmount() {
@@ -118,5 +116,32 @@ class AccountServiceTest {
         var accounts = service.findByOwnerName("Alice");
         assertEquals(1, accounts.size());
         assertEquals("Alice", accounts.get(0).getOwnerName());
+    }
+
+    @Test void withdrawExceedsLimit() {
+        Account acc = new Account("Rich", new BigDecimal("10000.00"));
+        try {
+            var f = Account.class.getDeclaredField("id");
+            f.setAccessible(true);
+            f.set(acc, 1L);
+        } catch (Exception e) { throw new RuntimeException(e); }
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        // Withdrawal over $5000 should fail
+        assertThrows(IllegalArgumentException.class,
+            () -> service.withdraw(1L, new BigDecimal("5001.00")));
+    }
+
+    @Test void depositExceedsMaxBalance() {
+        Account acc = new Account("Wealthy", new BigDecimal("999000.00"));
+        try {
+            var f = Account.class.getDeclaredField("id");
+            f.setAccessible(true);
+            f.set(acc, 1L);
+        } catch (Exception e) { throw new RuntimeException(e); }
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
+        // Deposit that would exceed $1,000,000 should fail
+        assertThrows(IllegalArgumentException.class,
+            () -> service.deposit(1L, new BigDecimal("2000.00")));
     }
 }
