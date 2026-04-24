@@ -54,7 +54,7 @@ class LoanServiceTest {
     void testApplyForLoan_Success() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
+        when(loanRepository.save(any(Loan.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
         Loan loan = loanService.applyForLoan(1L, 10000.0, 12);
@@ -63,6 +63,9 @@ class LoanServiceTest {
         assertNotNull(loan);
         assertEquals(10000.0, loan.getAmount());
         assertEquals("PENDING", loan.getStatus());
+        // Interest rate should be 3.5% base + 0.5% for amount over $5k = 4.0%
+        assertEquals(4.0, loan.getInterestRate());
+        assertEquals(12, loan.getTermMonths());
         verify(loanRepository, times(1)).save(any(Loan.class));
     }
 
@@ -191,5 +194,57 @@ class LoanServiceTest {
         assertNotNull(loan);
         assertEquals(1L, loan.getId());
         assertEquals(10000.0, loan.getAmount());
+    }
+
+    @Test
+    void testApplyForLoan_AmountTooLow() {
+        // Arrange
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            loanService.applyForLoan(1L, 500.0, 12);
+        });
+
+        verify(loanRepository, never()).save(any(Loan.class));
+    }
+
+    @Test
+    void testApplyForLoan_AmountTooHigh() {
+        // Arrange
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            loanService.applyForLoan(1L, 1500000.0, 12);
+        });
+
+        verify(loanRepository, never()).save(any(Loan.class));
+    }
+
+    @Test
+    void testApplyForLoan_TermTooShort() {
+        // Arrange
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            loanService.applyForLoan(1L, 10000.0, 3);
+        });
+
+        verify(loanRepository, never()).save(any(Loan.class));
+    }
+
+    @Test
+    void testApplyForLoan_TermTooLong() {
+        // Arrange
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            loanService.applyForLoan(1L, 10000.0, 400);
+        });
+
+        verify(loanRepository, never()).save(any(Loan.class));
     }
 }
