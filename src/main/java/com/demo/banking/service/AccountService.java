@@ -57,6 +57,10 @@ public class AccountService {
             .orElseThrow(() -> new IllegalArgumentException("Account not found: " + id));
         if (amount.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Withdrawal amount must be positive");
+        // Daily withdrawal limit
+        BigDecimal maxWithdrawal = new BigDecimal("5000.00");
+        if (amount.compareTo(maxWithdrawal) > 0)
+            throw new IllegalArgumentException("Daily withdrawal limit is $5,000.00");
         if (acc.getBalance().compareTo(amount) < 0)
             throw new IllegalArgumentException("Insufficient funds");
         acc.setBalance(acc.getBalance().subtract(amount));
