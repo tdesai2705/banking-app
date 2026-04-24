@@ -48,39 +48,30 @@ jobs:
       - name: Record session with Smart Tests
         uses: docker://cloudbeesdemo/maven-st:v1
         run: |
-          smart-tests record session --build ${{ cloudbees.run_id }} --test-suite banking-app-tests > session.txt
+          smart-tests record session --build ${{ cloudbees.run_id }} --observation --test-suite banking-app-tests > session.txt
           cat session.txt
 
-      # Step 5: Download dependencies and compile
-      - name: Download dependencies and compile
+      # Step 5: Compile tests
+      - name: Compile tests
         uses: docker://maven:3.9-eclipse-temurin-17
         run: |
-          mvn clean compile test-compile -DskipTests -B
+          mvn test-compile
 
       # Step 6: Create Smart Tests subset
       - name: Create Smart Tests subset
         uses: docker://cloudbeesdemo/maven-st:v1
         run: |
-          find . -path '*/target/test-classes/**/*Test.class' -o -path '*/target/test-classes/**/*Tests.class' | \
-            sed 's|./target/test-classes/||' | \
-            sed 's|/|.|g' | \
-            sed 's|.class$||' > all-tests.txt
-          smart-tests subset maven --session @session.txt --target 50% --test-class-name-file all-tests.txt > smart-tests-subset.txt || echo "**" > smart-tests-subset.txt
-          echo "Smart Tests subset:"
+          find . -path '*/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst' -exec cat {} \; | \
+            grep "Test\.class$\|Tests\.class$" > filtered-tests.lst
+          smart-tests subset maven --session @session.txt --target 50% --test-compile-created-file filtered-tests.lst > smart-tests-subset.txt
           cat smart-tests-subset.txt
 
-      # Step 7: Run Smart Tests subset
-      - name: Run Smart Tests subset
+      # Step 7: Run tests with Smart Tests subset
+      - name: Run tests with Smart Tests subset
         uses: docker://maven:3.9-eclipse-temurin-17
         kind: test
         run: |
-          if [ -s smart-tests-subset.txt ] && ! grep -q "^\*\*$" smart-tests-subset.txt; then
-            echo "Running Smart Tests subset..."
-            mvn test -B -Dsurefire.includesFile=$PWD/smart-tests-subset.txt || true
-          else
-            echo "No subset available, running all tests..."
-            mvn test -B || true
-          fi
+          mvn test -Dsurefire.includesFile=$PWD/smart-tests-subset.txt
 
       # Step 8: Record test results with Smart Tests
       - name: Record test results with Smart Tests
