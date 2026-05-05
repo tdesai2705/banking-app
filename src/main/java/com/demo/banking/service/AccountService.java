@@ -45,6 +45,10 @@ public class AccountService {
     }
 
     public List<Account> findByOwnerName(String ownerName) {
+        // Validate owner name parameter
+        if (ownerName == null || ownerName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Owner name cannot be empty");
+        }
         return repo.findByOwnerName(ownerName);
     }
 
