@@ -116,4 +116,27 @@ class AccountControllerTest {
                .content(mapper.writeValueAsString(withdrawRequest)))
            .andExpect(status().isBadRequest());
     }
+
+    @Test void listReturnsEmptyWhenNoAccounts() throws Exception {
+        when(service.findAll()).thenReturn(Collections.emptyList());
+        mvc.perform(get("/api/accounts"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$").isArray())
+           .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test void createAccountReturnsCreated() throws Exception {
+        Account newAccount = new Account("New Owner", new BigDecimal("500.00"));
+        when(service.createAccount(eq("New Owner"), any(BigDecimal.class))).thenReturn(newAccount);
+
+        Map<String, String> createRequest = new HashMap<>();
+        createRequest.put("ownerName", "New Owner");
+        createRequest.put("initialBalance", "500.00");
+
+        mvc.perform(post("/api/accounts")
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(mapper.writeValueAsString(createRequest)))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.ownerName").value("New Owner"));
+    }
 }
