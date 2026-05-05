@@ -247,4 +247,32 @@ class LoanServiceTest {
 
         verify(loanRepository, never()).save(any(Loan.class));
     }
+
+    @Test
+    void testGetLoansByUserId_EmptyList() {
+        // Arrange
+        when(loanRepository.findByUserId(1L)).thenReturn(Arrays.asList());
+
+        // Act
+        List<Loan> result = loanService.getLoansByUserId(1L);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testRejectLoan_WithoutReason() {
+        // Arrange
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
+        when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
+
+        // Act
+        Loan rejectedLoan = loanService.rejectLoan(1L, null);
+
+        // Assert
+        assertNotNull(rejectedLoan);
+        assertEquals("REJECTED", testLoan.getStatus());
+        verify(loanRepository, times(1)).save(testLoan);
+    }
 }
