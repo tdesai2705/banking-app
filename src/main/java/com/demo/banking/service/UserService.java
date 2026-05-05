@@ -17,6 +17,11 @@ public class UserService {
 
     @Transactional
     public User createUser(String username, String email, String password, String fullName) {
+        // Validate password
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
+        }
+
         // Check if username already exists
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already exists: " + username);
