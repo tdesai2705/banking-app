@@ -191,4 +191,25 @@ class UserServiceTest {
         assertEquals("johndoe", result.get(0).getUsername());
         assertEquals("janedoe", result.get(1).getUsername());
     }
+
+    @Test
+    void testGetAllUsers_EmptyList() {
+        // Arrange
+        when(userRepository.findAll()).thenReturn(Arrays.asList());
+
+        // Act
+        List<User> result = userService.getAllUsers();
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testCreateUser_NullPassword() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            userService.createUser("johndoe", "john@example.com", null, "John Doe");
+        });
+    }
 }
