@@ -271,4 +271,30 @@ class TransactionServiceTest {
             transactionService.getTransactionById(1L);
         });
     }
+
+    @Test
+    void testTransferToSameAccount() {
+        // Arrange
+        when(accountRepository.findByAccountNumber("ACC001")).thenReturn(Optional.of(sourceAccount));
+
+        // Act & Assert - transferring to same account should fail
+        assertThrows(IllegalArgumentException.class, () -> {
+            transactionService.transferMoney("ACC001", "ACC001", 100.0);
+        });
+    }
+
+    @Test
+    void testMultipleTransactionsUpdateBalance() {
+        // Arrange
+        when(accountRepository.findByAccountNumber("ACC001")).thenReturn(Optional.of(sourceAccount));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // Act
+        transactionService.deposit("ACC001", 200.0);
+        transactionService.withdraw("ACC001", 100.0);
+
+        // Assert
+        assertEquals(new BigDecimal("1100.0"), sourceAccount.getBalance());
+        verify(accountRepository, times(2)).save(sourceAccount);
+    }
 }
