@@ -144,4 +144,19 @@ class AccountServiceTest {
         assertThrows(IllegalArgumentException.class,
             () -> service.deposit(1L, new BigDecimal("2000.00")));
     }
+
+    @Test void multipleDepositsAccumulate() {
+        Account acc = sampleAccount();
+        when(repo.findById(1L)).thenReturn(Optional.of(acc));
+        when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
+        service.deposit(1L, new BigDecimal("100.00"));
+        Account result = service.deposit(1L, new BigDecimal("50.00"));
+        assertEquals(new BigDecimal("650.00"), result.getBalance());
+    }
+
+    @Test void findByOwnerNameReturnsEmpty() {
+        when(repo.findByOwnerName("NonExistent")).thenReturn(java.util.Collections.emptyList());
+        var accounts = service.findByOwnerName("NonExistent");
+        assertTrue(accounts.isEmpty());
+    }
 }
