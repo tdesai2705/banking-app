@@ -1,322 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<con:suitableRestMockService xmlns:con="http://eviware.com/soapui/config">
-  <con:name>Banking App API Tests</con:name>
-  <con:description>REST API tests for Banking Application</con:description>
+<con:soapui-project id="banking-api-project" name="Banking App API Tests"
+                     resourceRoot="" soapui-version="5.7.0"
+                     xmlns:con="http://eviware.com/soapui/config">
   <con:settings/>
   <con:interface xsi:type="con:RestService" id="banking-api" name="Banking API"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                 type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <con:settings/>
     <con:definitionCache type="TEXT" rootPart=""/>
     <con:endpoints>
-      <con:endpoint>${BANKING_APP_URL}</con:endpoint>
+      <con:endpoint>http://banking-app.tejas-qa.svc.cluster.local</con:endpoint>
     </con:endpoints>
 
-    <!-- Health Check Test -->
-    <con:resource name="Health Check" path="/actuator/health">
+    <!-- Health Check Resource -->
+    <con:resource name="Health" path="/actuator/health" id="health-resource">
       <con:settings/>
       <con:parameters/>
-      <con:method name="GET" method="GET">
+      <con:method name="Health Check" id="health-check" method="GET">
         <con:settings/>
         <con:parameters/>
         <con:representation type="RESPONSE">
           <con:mediaType>application/json</con:mediaType>
           <con:status>200</con:status>
-          <con:params/>
-          <con:element>Response</con:element>
         </con:representation>
-        <con:request name="Health Check Request" id="health-check">
+        <con:request name="Request 1" id="health-check-req" mediaType="application/json">
           <con:settings/>
-          <con:endpoint>${BANKING_APP_URL}</con:endpoint>
+          <con:endpoint>http://banking-app.tejas-qa.svc.cluster.local</con:endpoint>
           <con:request/>
           <con:credentials>
+            <con:selectedAuthProfile>No Authorization</con:selectedAuthProfile>
             <con:authType>No Authorization</con:authType>
           </con:credentials>
           <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
           <con:parameters/>
-          <con:assertion type="Valid HTTP Status Codes" id="status-200">
-            <con:configuration>
-              <codes>200</codes>
-            </con:configuration>
-          </con:assertion>
-          <con:assertion type="JsonPath Match" id="json-status-up">
-            <con:configuration>
-              <path>$.status</path>
-              <content>UP</content>
-            </con:configuration>
-          </con:assertion>
         </con:request>
       </con:method>
     </con:resource>
 
-    <!-- Account API Tests -->
-    <con:resource name="Accounts" path="/api/accounts">
+    <!-- Accounts Resource -->
+    <con:resource name="Accounts" path="/api/accounts" id="accounts-resource">
       <con:settings/>
       <con:parameters/>
-
-      <!-- GET All Accounts -->
-      <con:method name="GET All Accounts" method="GET">
+      <con:method name="Get All Accounts" id="get-accounts" method="GET">
         <con:settings/>
         <con:parameters/>
         <con:representation type="RESPONSE">
           <con:mediaType>application/json</con:mediaType>
           <con:status>200</con:status>
-          <con:params/>
-          <con:element>Response</con:element>
         </con:representation>
-        <con:request name="Get All Accounts" id="get-all-accounts">
+        <con:request name="Request 1" id="get-accounts-req" mediaType="application/json">
           <con:settings/>
-          <con:endpoint>${BANKING_APP_URL}</con:endpoint>
+          <con:endpoint>http://banking-app.tejas-qa.svc.cluster.local</con:endpoint>
           <con:request/>
           <con:credentials>
+            <con:selectedAuthProfile>No Authorization</con:selectedAuthProfile>
             <con:authType>No Authorization</con:authType>
           </con:credentials>
           <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
           <con:parameters/>
-          <con:assertion type="Valid HTTP Status Codes" id="status-200">
-            <con:configuration>
-              <codes>200</codes>
-            </con:configuration>
-          </con:assertion>
-          <con:assertion type="Response SLA Assertion" id="sla-1000ms">
-            <con:configuration>
-              <SLA>1000</SLA>
-            </con:configuration>
-          </con:assertion>
-        </con:request>
-      </con:method>
-
-      <!-- POST Create Account -->
-      <con:method name="POST Create Account" method="POST">
-        <con:settings/>
-        <con:parameters/>
-        <con:representation type="REQUEST">
-          <con:mediaType>application/json</con:mediaType>
-          <con:params/>
-        </con:representation>
-        <con:representation type="RESPONSE">
-          <con:mediaType>application/json</con:mediaType>
-          <con:status>200</con:status>
-          <con:params/>
-          <con:element>Response</con:element>
-        </con:representation>
-        <con:request name="Create Account Request" id="create-account">
-          <con:settings/>
-          <con:endpoint>${BANKING_APP_URL}</con:endpoint>
-          <con:request>{
-  "ownerName": "John Doe",
-  "balance": 1000.00
-}</con:request>
-          <con:credentials>
-            <con:authType>No Authorization</con:authType>
-          </con:credentials>
-          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
-          <con:parameters/>
-          <con:assertion type="Valid HTTP Status Codes" id="status-200-201">
-            <con:configuration>
-              <codes>200,201</codes>
-            </con:configuration>
-          </con:assertion>
-          <con:assertion type="JsonPath Existence Match" id="json-id-exists">
-            <con:configuration>
-              <path>$.id</path>
-            </con:configuration>
-          </con:assertion>
-          <con:assertion type="JsonPath Match" id="json-owner-name">
-            <con:configuration>
-              <path>$.ownerName</path>
-              <content>John Doe</content>
-            </con:configuration>
-          </con:assertion>
         </con:request>
       </con:method>
     </con:resource>
 
-    <!-- Account Operations -->
-    <con:resource name="Account Operations" path="/api/accounts/{id}">
-      <con:settings/>
-      <con:parameters>
-        <con:parameter>
-          <con:name>id</con:name>
-          <con:value>1</con:value>
-          <con:style>TEMPLATE</con:style>
-        </con:parameter>
-      </con:parameters>
-
-      <!-- GET Account by ID -->
-      <con:method name="GET Account by ID" method="GET">
-        <con:settings/>
-        <con:parameters/>
-        <con:representation type="RESPONSE">
-          <con:mediaType>application/json</con:mediaType>
-          <con:status>200</con:status>
-          <con:params/>
-          <con:element>Response</con:element>
-        </con:representation>
-        <con:request name="Get Account by ID" id="get-account-by-id">
-          <con:settings/>
-          <con:endpoint>${BANKING_APP_URL}</con:endpoint>
-          <con:request/>
-          <con:credentials>
-            <con:authType>No Authorization</con:authType>
-          </con:credentials>
-          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
-          <con:parameters/>
-          <con:assertion type="Valid HTTP Status Codes" id="status-200-404">
-            <con:configuration>
-              <codes>200,404</codes>
-            </con:configuration>
-          </con:assertion>
-        </con:request>
-      </con:method>
-
-      <!-- POST Deposit -->
-      <con:method name="POST Deposit" method="POST" path="/deposit">
-        <con:settings/>
-        <con:parameters/>
-        <con:representation type="REQUEST">
-          <con:mediaType>application/json</con:mediaType>
-          <con:params/>
-        </con:representation>
-        <con:representation type="RESPONSE">
-          <con:mediaType>application/json</con:mediaType>
-          <con:status>200</con:status>
-          <con:params/>
-          <con:element>Response</con:element>
-        </con:representation>
-        <con:request name="Deposit Request" id="deposit">
-          <con:settings/>
-          <con:endpoint>${BANKING_APP_URL}</con:endpoint>
-          <con:request>{
-  "amount": 500.00
-}</con:request>
-          <con:credentials>
-            <con:authType>No Authorization</con:authType>
-          </con:credentials>
-          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
-          <con:parameters/>
-          <con:assertion type="Valid HTTP Status Codes" id="status-200">
-            <con:configuration>
-              <codes>200</codes>
-            </con:configuration>
-          </con:assertion>
-          <con:assertion type="Response SLA Assertion" id="sla-1000ms">
-            <con:configuration>
-              <SLA>1000</SLA>
-            </con:configuration>
-          </con:assertion>
-        </con:request>
-      </con:method>
-
-      <!-- POST Withdraw -->
-      <con:method name="POST Withdraw" method="POST" path="/withdraw">
-        <con:settings/>
-        <con:parameters/>
-        <con:representation type="REQUEST">
-          <con:mediaType>application/json</con:mediaType>
-          <con:params/>
-        </con:representation>
-        <con:representation type="RESPONSE">
-          <con:mediaType>application/json</con:mediaType>
-          <con:status>200</con:status>
-          <con:params/>
-          <con:element>Response</con:element>
-        </con:representation>
-        <con:request name="Withdraw Request" id="withdraw">
-          <con:settings/>
-          <con:endpoint>${BANKING_APP_URL}</con:endpoint>
-          <con:request>{
-  "amount": 200.00
-}</con:request>
-          <con:credentials>
-            <con:authType>No Authorization</con:authType>
-          </con:credentials>
-          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
-          <con:parameters/>
-          <con:assertion type="Valid HTTP Status Codes" id="status-200-400">
-            <con:configuration>
-              <codes>200,400</codes>
-            </con:configuration>
-          </con:assertion>
-        </con:request>
-      </con:method>
-    </con:resource>
-
-    <!-- User API Tests -->
-    <con:resource name="Users" path="/api/users">
+    <!-- Users Resource -->
+    <con:resource name="Users" path="/api/users" id="users-resource">
       <con:settings/>
       <con:parameters/>
-
-      <!-- POST Create User -->
-      <con:method name="POST Create User" method="POST">
-        <con:settings/>
-        <con:parameters/>
-        <con:representation type="REQUEST">
-          <con:mediaType>application/json</con:mediaType>
-          <con:params/>
-        </con:representation>
-        <con:representation type="RESPONSE">
-          <con:mediaType>application/json</con:mediaType>
-          <con:status>200</con:status>
-          <con:params/>
-          <con:element>Response</con:element>
-        </con:representation>
-        <con:request name="Create User Request" id="create-user">
-          <con:settings/>
-          <con:endpoint>${BANKING_APP_URL}</con:endpoint>
-          <con:request>{
-  "username": "testuser",
-  "email": "testuser@example.com",
-  "password": "password123",
-  "fullName": "Test User"
-}</con:request>
-          <con:credentials>
-            <con:authType>No Authorization</con:authType>
-          </con:credentials>
-          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
-          <con:parameters/>
-          <con:assertion type="Valid HTTP Status Codes" id="status-200">
-            <con:configuration>
-              <codes>200</codes>
-            </con:configuration>
-          </con:assertion>
-          <con:assertion type="JsonPath Existence Match" id="json-id-exists">
-            <con:configuration>
-              <path>$.id</path>
-            </con:configuration>
-          </con:assertion>
-          <con:assertion type="JsonPath Match" id="json-username">
-            <con:configuration>
-              <path>$.username</path>
-              <content>testuser</content>
-            </con:configuration>
-          </con:assertion>
-        </con:request>
-      </con:method>
-
-      <!-- GET All Users -->
-      <con:method name="GET All Users" method="GET">
+      <con:method name="Get All Users" id="get-users" method="GET">
         <con:settings/>
         <con:parameters/>
         <con:representation type="RESPONSE">
           <con:mediaType>application/json</con:mediaType>
           <con:status>200</con:status>
-          <con:params/>
-          <con:element>Response</con:element>
         </con:representation>
-        <con:request name="Get All Users" id="get-all-users">
+        <con:request name="Request 1" id="get-users-req" mediaType="application/json">
           <con:settings/>
-          <con:endpoint>${BANKING_APP_URL}</con:endpoint>
+          <con:endpoint>http://banking-app.tejas-qa.svc.cluster.local</con:endpoint>
           <con:request/>
           <con:credentials>
+            <con:selectedAuthProfile>No Authorization</con:selectedAuthProfile>
             <con:authType>No Authorization</con:authType>
           </con:credentials>
           <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
           <con:parameters/>
-          <con:assertion type="Valid HTTP Status Codes" id="status-200">
-            <con:configuration>
-              <codes>200</codes>
-            </con:configuration>
-          </con:assertion>
         </con:request>
       </con:method>
     </con:resource>
@@ -328,79 +93,96 @@
     <con:runType>SEQUENTIAL</con:runType>
 
     <!-- Health Check Test Case -->
-    <con:testCase id="health-check-test" name="Health Check Test">
+    <con:testCase id="health-test" name="Health Check Test" failOnError="true" failTestCaseOnErrors="true" keepSession="false">
       <con:settings/>
-      <con:testStep type="restrequest" name="Health Check" id="health-check-step">
-        <con:config>
-          <service>Banking API</service>
-          <resource>Health Check</resource>
-          <method>GET</method>
-          <request>health-check</request>
+      <con:testStep type="restrequest" name="Health Check" id="health-step">
+        <con:settings/>
+        <con:config service="Banking API" methodName="Health Check" resourcePath="/actuator/health" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Health Check" id="health-check-req" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>http://banking-app.tejas-qa.svc.cluster.local</con:endpoint>
+            <con:request/>
+            <con:credentials>
+              <con:selectedAuthProfile>No Authorization</con:selectedAuthProfile>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:parameters/>
+            <con:assertion type="Valid HTTP Status Codes" id="status-assertion" name="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+            <con:assertion type="JsonPath Match" id="json-assertion" name="JsonPath Match">
+              <con:configuration>
+                <path>$.status</path>
+                <content>UP</content>
+                <allowWildcards>false</allowWildcards>
+                <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                <ignoreComments>false</ignoreComments>
+              </con:configuration>
+            </con:assertion>
+          </con:restRequest>
         </con:config>
       </con:testStep>
     </con:testCase>
 
-    <!-- Account CRUD Test Case -->
-    <con:testCase id="account-crud-test" name="Account CRUD Test">
+    <!-- Accounts Test Case -->
+    <con:testCase id="accounts-test" name="Accounts API Test" failOnError="true" failTestCaseOnErrors="true" keepSession="false">
       <con:settings/>
-      <con:testStep type="restrequest" name="Get All Accounts" id="get-accounts-step">
-        <con:config>
-          <service>Banking API</service>
-          <resource>Accounts</resource>
-          <method>GET All Accounts</method>
-          <request>get-all-accounts</request>
-        </con:config>
-      </con:testStep>
-      <con:testStep type="restrequest" name="Create Account" id="create-account-step">
-        <con:config>
-          <service>Banking API</service>
-          <resource>Accounts</resource>
-          <method>POST Create Account</method>
-          <request>create-account</request>
+      <con:testStep type="restrequest" name="Get All Accounts" id="accounts-step">
+        <con:settings/>
+        <con:config service="Banking API" methodName="Get All Accounts" resourcePath="/api/accounts" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Get All Accounts" id="get-accounts-req" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>http://banking-app.tejas-qa.svc.cluster.local</con:endpoint>
+            <con:request/>
+            <con:credentials>
+              <con:selectedAuthProfile>No Authorization</con:selectedAuthProfile>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:parameters/>
+            <con:assertion type="Valid HTTP Status Codes" id="status-assertion" name="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+          </con:restRequest>
         </con:config>
       </con:testStep>
     </con:testCase>
 
-    <!-- Account Operations Test Case -->
-    <con:testCase id="account-operations-test" name="Account Operations Test">
+    <!-- Users Test Case -->
+    <con:testCase id="users-test" name="Users API Test" failOnError="true" failTestCaseOnErrors="true" keepSession="false">
       <con:settings/>
-      <con:testStep type="restrequest" name="Deposit" id="deposit-step">
-        <con:config>
-          <service>Banking API</service>
-          <resource>Account Operations</resource>
-          <method>POST Deposit</method>
-          <request>deposit</request>
-        </con:config>
-      </con:testStep>
-      <con:testStep type="restrequest" name="Withdraw" id="withdraw-step">
-        <con:config>
-          <service>Banking API</service>
-          <resource>Account Operations</resource>
-          <method>POST Withdraw</method>
-          <request>withdraw</request>
-        </con:config>
-      </con:testStep>
-    </con:testCase>
-
-    <!-- User Management Test Case -->
-    <con:testCase id="user-management-test" name="User Management Test">
-      <con:settings/>
-      <con:testStep type="restrequest" name="Create User" id="create-user-step">
-        <con:config>
-          <service>Banking API</service>
-          <resource>Users</resource>
-          <method>POST Create User</method>
-          <request>create-user</request>
-        </con:config>
-      </con:testStep>
-      <con:testStep type="restrequest" name="Get All Users" id="get-users-step">
-        <con:config>
-          <service>Banking API</service>
-          <resource>Users</resource>
-          <method>GET All Users</method>
-          <request>get-all-users</request>
+      <con:testStep type="restrequest" name="Get All Users" id="users-step">
+        <con:settings/>
+        <con:config service="Banking API" methodName="Get All Users" resourcePath="/api/users" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Get All Users" id="get-users-req" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>http://banking-app.tejas-qa.svc.cluster.local</con:endpoint>
+            <con:request/>
+            <con:credentials>
+              <con:selectedAuthProfile>No Authorization</con:selectedAuthProfile>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:parameters/>
+            <con:assertion type="Valid HTTP Status Codes" id="status-assertion" name="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+          </con:restRequest>
         </con:config>
       </con:testStep>
     </con:testCase>
   </con:testSuite>
-</con:suitableRestMockService>
+
+  <con:properties/>
+  <con:wssContainer/>
+  <con:oAuth2ProfileContainer/>
+  <con:oAuth1ProfileContainer/>
+  <con:sensitiveInformation/>
+</con:soapui-project>
