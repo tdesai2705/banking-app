@@ -184,16 +184,19 @@ jobs:
         id: api-tests
         uses: docker://curlimages/curl:latest
         run: |
-          # Set banking app URL
+          # Set banking app URL (service port is 80, not 8080)
           BASE_URL="http://banking-app.tejas-qa.svc.cluster.local"
 
           echo "🧪 Running REST API Tests..."
+          echo "Target URL: $BASE_URL"
           PASSED=0
           FAILED=0
 
           # Test 1: Health Check
+          echo ""
           echo "Test 1: Health Check"
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health")
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health" || echo "000")
+          echo "Response code: $RESPONSE"
           if [ "$RESPONSE" = "200" ]; then
             echo "✅ Health check passed (200 OK)"
             PASSED=$((PASSED + 1))
@@ -203,8 +206,10 @@ jobs:
           fi
 
           # Test 2: Get All Accounts
+          echo ""
           echo "Test 2: Get All Accounts"
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/accounts")
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/accounts" || echo "000")
+          echo "Response code: $RESPONSE"
           if [ "$RESPONSE" = "200" ]; then
             echo "✅ Get accounts passed (200 OK)"
             PASSED=$((PASSED + 1))
@@ -214,8 +219,10 @@ jobs:
           fi
 
           # Test 3: Get All Users
+          echo ""
           echo "Test 3: Get All Users"
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/users")
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/users" || echo "000")
+          echo "Response code: $RESPONSE"
           if [ "$RESPONSE" = "200" ]; then
             echo "✅ Get users passed (200 OK)"
             PASSED=$((PASSED + 1))
@@ -276,14 +283,14 @@ jobs:
         id: jmeter
         uses: docker://justb4/jmeter:latest
         run: |
-          # Set banking app URL
-          BANKING_APP_URL="http://banking-app.tejas-qa.svc.cluster.local:8080"
+          # Set banking app host (domain only, no protocol or port)
+          BANKING_APP_HOST="banking-app.tejas-qa.svc.cluster.local"
 
           # Run JMeter tests
           cd ${{ cloudbees.workspace }}/tests/jmeter
           jmeter -n \
             -t banking-app-load-test.jmx \
-            -JBANKING_APP_URL="$BANKING_APP_URL" \
+            -JBANKING_APP_URL="$BANKING_APP_HOST" \
             -JNUM_USERS=50 \
             -JRAMP_UP=10 \
             -JDURATION=60 \

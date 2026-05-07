@@ -10,7 +10,7 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="BANKING_APP_URL" elementType="Argument">
             <stringProp name="Argument.name">BANKING_APP_URL</stringProp>
-            <stringProp name="Argument.value">${__P(BANKING_APP_URL,http://banking-app:8080)}</stringProp>
+            <stringProp name="Argument.value">${__P(BANKING_APP_URL,banking-app)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="NUM_USERS" elementType="Argument">
