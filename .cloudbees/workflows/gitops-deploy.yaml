@@ -172,6 +172,14 @@ jobs:
     needs: update-gitops-qa
     environment: qa
     steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+
+      - name: Set kubeconfig
+        uses: cloudbees-days/setup-kubeconfig
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
       - name: Wait for ArgoCD sync
         uses: docker://alpine:latest
         shell: sh
