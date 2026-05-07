@@ -14,8 +14,8 @@ on:
 
 # CloudBees Unify permissions
 permissions:
-  scm-token-own: read-write
-  scm-token-org: read-write
+  scm-token-own: write
+  scm-token-org: write
   id-token: read
 
 jobs:
