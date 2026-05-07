@@ -309,13 +309,6 @@
       </ResultCollector>
       <hashTree/>
 
-      <!-- Assertions for Performance Thresholds -->
-      <kg.apc.jmeter.reporters.FlexibleFileWriter guiclass="kg.apc.jmeter.reporters.FlexibleFileWriterGui" testclass="kg.apc.jmeter.reporters.FlexibleFileWriter" testname="Performance Threshold Report" enabled="true">
-        <stringProp name="filename">performance-thresholds.txt</stringProp>
-        <stringProp name="columns">timeStamp|elapsed|responseCode|responseMessage|success|label</stringProp>
-        <boolProp name="overwrite">true</boolProp>
-      </kg.apc.jmeter.reporters.FlexibleFileWriter>
-      <hashTree/>
     </hashTree>
   </hashTree>
 </jmeterTestPlan>
