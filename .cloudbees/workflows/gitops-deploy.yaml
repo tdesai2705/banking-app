@@ -49,6 +49,8 @@ jobs:
 
   build-and-push:
     needs: unit-tests
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
     steps:
       - name: Checkout code
         uses: cloudbees-io/checkout@v1
