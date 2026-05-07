@@ -84,20 +84,12 @@ jobs:
           build-args: |
             VERSION=${{ steps.version.outputs.VERSION }}
 
-      - name: Tag as latest
-        uses: docker://gcr.io/go-containerregistry/crane:latest
-        run: |
-          crane auth login index.docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          crane tag ${{ secrets.DOCKER_USERNAME }}/banking-app:${{ steps.version.outputs.VERSION }} latest
-          echo "✅ Tagged as latest"
-
       - name: Publish build evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
             ## Docker Build Evidence
             - Image: ${{ secrets.DOCKER_USERNAME }}/banking-app:${{ steps.version.outputs.VERSION }}
-            - Also tagged as: latest
             - Registry: Docker Hub
             - Commit: ${{ cloudbees.scm.sha }}
             - Status: ✅ Built and Pushed
