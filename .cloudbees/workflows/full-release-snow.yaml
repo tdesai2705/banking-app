@@ -200,7 +200,7 @@ jobs:
             - Ticket: BANK-123
             - Previous Status: In Progress
             - New Status: Ready for QA
-            - Updated: ${{ cloudbees.run_time }}
+            - Updated: Run ${{ cloudbees.run_id }}
 
   # Job 1.6: Stage 1 Approval Gate
   approve-qa-deployment:
@@ -721,7 +721,7 @@ jobs:
             ## ServiceNow Approval Received
             - CR Number: CHG0012345
             - Approved By: CAB, Change Manager
-            - Approved At: ${{ cloudbees.run_time }}
+            - Approved: Run ${{ cloudbees.run_id }}
             - **Status: APPROVED FOR PRODUCTION DEPLOYMENT**
 
   # Job 4.3: Deploy to Production
@@ -845,7 +845,7 @@ jobs:
             ## ServiceNow CR Complete
             - CR Number: CHG0012345
             - Status: Implementation Complete
-            - Deployed At: ${{ cloudbees.run_time }}
+            - Deployed: Run ${{ cloudbees.run_id }}
             - **Production Deployment: SUCCESSFUL**
 
   # Job 4.7: Final Release Summary
@@ -870,7 +870,7 @@ jobs:
             ### Release Information
             - Version: ${{ cloudbees.scm.branch }}
             - Commit: ${{ cloudbees.scm.sha }}
-            - Release Date: ${{ cloudbees.run_time }}
+            - Release Run: ${{ cloudbees.run_id }}
             - ServiceNow CR: CHG0012345
 
             ### Stage 1: Release Readiness
