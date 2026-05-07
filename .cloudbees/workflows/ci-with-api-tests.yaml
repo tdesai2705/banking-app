@@ -184,8 +184,8 @@ jobs:
         id: soapui-tests
         uses: docker://tejasdesai27/soapui:latest
         run: |
-          # Set banking app URL
-          BASE_URL="http://banking-app.tejas-qa.svc.cluster.local"
+          # Set banking app URL (using service ClusterIP)
+          BASE_URL="http://10.108.2.87"
 
           echo "🧪 Running SoapUI API Tests..."
           echo "Target URL: $BASE_URL"
