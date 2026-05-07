@@ -227,7 +227,7 @@ jobs:
   #============================================================================
 
   update-gitops-staging:
-    needs: verify-qa-deployment
+    needs: [build-and-push, verify-qa-deployment]
     environment: staging
     steps:
       - name: Checkout code
@@ -296,7 +296,7 @@ jobs:
   #============================================================================
 
   update-gitops-prod:
-    needs: update-gitops-staging
+    needs: [build-and-push, update-gitops-staging]
     environment: prod
     steps:
       - name: Checkout code
