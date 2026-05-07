@@ -131,7 +131,7 @@
         </HTTPSamplerProxy>
         <hashTree>
           <!-- Duration Assertion (Response time < 500ms) -->
-          <DurationAssertion guiclass="DurationAssertionGui" testclass="DurationAssertion" testname="Response Time < 500ms" enabled="true">
+          <DurationAssertion guiclass="DurationAssertionGui" testclass="DurationAssertion" testname="Response Time &lt; 500ms" enabled="true">
             <stringProp name="DurationAssertion.duration">500</stringProp>
           </DurationAssertion>
           <hashTree/>
