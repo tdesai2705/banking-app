@@ -132,23 +132,36 @@ jobs:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
 
-      - name: Deploy to QA with Helm
-        uses: cloudbees-io/helm-install@v1
+      - name: Set kubeconfig
+        uses: cloudbees-days/setup-kubeconfig
         with:
-          chart-location: ${{ cloudbees.workspace }}/chart
-          release-name: banking-app
-          namespace: tejas-qa
           kubeconfig: ${{ secrets.KUBECONFIG }}
-          values: |
-            replicaCount: 2
-            image:
-              repository: tejasdesai27/banking-app
-              tag: latest
-              pullPolicy: Always
-            service:
-              type: ClusterIP
-              port: 80
-              targetPort: 8080
+
+      - name: Deploy to QA with Helm
+        uses: docker://alpine/helm:latest
+        shell: sh
+        run: |
+          # Create values file
+          cat > /tmp/values.yaml <<EOF
+          replicaCount: 2
+          image:
+            repository: tejasdesai27/banking-app
+            tag: latest
+            pullPolicy: Always
+          service:
+            type: ClusterIP
+            port: 80
+            targetPort: 8080
+          EOF
+
+          # Deploy with helm
+          helm upgrade --install banking-app ./chart \
+            --namespace tejas-qa \
+            --values /tmp/values.yaml \
+            --timeout 5m \
+            --wait
+
+          echo "✅ Banking app deployed to QA!"
 
       - name: Publish deployment evidence
         uses: cloudbees-io/publish-evidence-item@v1
