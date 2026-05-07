@@ -128,7 +128,6 @@ jobs:
   # Job 3: Deploy to QA
   deploy-qa:
     needs: build
-    environment: tejas-qa
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
