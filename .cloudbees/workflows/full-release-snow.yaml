@@ -39,7 +39,7 @@ jobs:
           BRANCH="${{ cloudbees.scm.branch }}"
           VERSION=${BRANCH#release/}
           echo "Release version: $VERSION"
-          echo "$VERSION" > $CLOUDBEES_OUTPUTS/VERSION
+          echo -n "$VERSION" > $CLOUDBEES_OUTPUTS/VERSION
 
       - name: Create release tag
         uses: docker://alpine/git:latest
