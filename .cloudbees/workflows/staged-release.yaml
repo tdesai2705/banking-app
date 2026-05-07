@@ -413,7 +413,7 @@ jobs:
 
   deploy-production:
     needs: smoke-tests-staging
-    environment: production
+    environment: prod
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
@@ -459,7 +459,7 @@ jobs:
 
   smoke-tests-production:
     needs: deploy-production
-    environment: production
+    environment: prod
     steps:
       - name: Run production smoke tests
         uses: docker://alpine:latest
