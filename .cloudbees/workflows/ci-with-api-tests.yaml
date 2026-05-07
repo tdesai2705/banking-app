@@ -229,6 +229,13 @@ jobs:
                       else
                         echo "⚠️ No test results generated"
                       fi
+                  resources:
+                    requests:
+                      cpu: "250m"
+                      memory: "512Mi"
+                    limits:
+                      cpu: "500m"
+                      memory: "1Gi"
           EOF
 
           # Wait for job to complete (max 5 minutes)
