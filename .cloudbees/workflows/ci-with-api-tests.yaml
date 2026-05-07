@@ -188,17 +188,17 @@ jobs:
           BANKING_APP_URL="http://banking-app.tejas-qa.svc.cluster.local"
 
           # Run SoapUI tests
-          cd /workspace/tests/soapui
+          cd ${{ cloudbees.workspace }}/tests/soapui
           testrunner.sh \
             -e"$BANKING_APP_URL" \
-            -f/workspace/soapui-results \
+            -f${{ cloudbees.workspace }}/soapui-results \
             -j \
             -r \
             banking-app-soapui-project.xml || true
 
           # Check results
-          if [ -f /workspace/soapui-results/TEST-*.xml ]; then
-            FAILURES=$(grep -c 'failures="[1-9]' /workspace/soapui-results/TEST-*.xml || echo "0")
+          if [ -f ${{ cloudbees.workspace }}/soapui-results/TEST-*.xml ]; then
+            FAILURES=$(grep -c 'failures="[1-9]' ${{ cloudbees.workspace }}/soapui-results/TEST-*.xml || echo "0")
             if [ "$FAILURES" -eq "0" ]; then
               echo "PASS" > $CLOUDBEES_OUTPUTS/STATUS
               echo "SoapUI tests passed ✅"
@@ -250,7 +250,7 @@ jobs:
           BANKING_APP_URL="http://banking-app.tejas-qa.svc.cluster.local:8080"
 
           # Run JMeter tests
-          cd /workspace/tests/jmeter
+          cd ${{ cloudbees.workspace }}/tests/jmeter
           jmeter -n \
             -t banking-app-load-test.jmx \
             -JBANKING_APP_URL="$BANKING_APP_URL" \
@@ -258,7 +258,7 @@ jobs:
             -JRAMP_UP=10 \
             -JDURATION=60 \
             -l jmeter-results.jtl \
-            -e -o /workspace/jmeter-report || true
+            -e -o ${{ cloudbees.workspace }}/jmeter-report || true
 
           # Parse results
           if [ -f jmeter-results.jtl ]; then
