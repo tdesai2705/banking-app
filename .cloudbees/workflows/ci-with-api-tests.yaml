@@ -180,6 +180,11 @@ jobs:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
 
+      - name: Set kubeconfig
+        uses: cloudbees-days/setup-kubeconfig
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
       - name: Run SoapUI API Tests via Kubernetes Job
         id: soapui-tests
         uses: docker://bitnami/kubectl:latest
