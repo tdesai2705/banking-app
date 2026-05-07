@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: banking-app-staging
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/tdesai2705/banking-app.git
+    targetRevision: main
+    path: chart
+    helm:
+      valueFiles:
+        - ../gitops/staging/values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tejas-staging
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
