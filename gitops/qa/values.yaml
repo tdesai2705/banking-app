@@ -3,7 +3,7 @@
 
 image:
   repository: tejasdesai27/banking-app
-  tag: v1.0.10-a6cb990 # Updated automatically by CloudBees workflow
+  tag: v1.0.11-743ea10 # Updated automatically by CloudBees workflow
   pullPolicy: Always
 replicaCount: 2
 service:
