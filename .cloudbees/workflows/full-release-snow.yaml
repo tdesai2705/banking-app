@@ -44,6 +44,11 @@ jobs:
       - name: Create release tag
         uses: docker://alpine/git:latest
         run: |
+          # Configure git identity
+          git config --global user.email "cloudbees-ci@example.com"
+          git config --global user.name "CloudBees CI"
+
+          # Create annotated tag
           VERSION="${{ steps.version.outputs.VERSION }}"
           git tag -a "$VERSION" -m "Release $VERSION"
           echo "✅ Release tag created: $VERSION"
