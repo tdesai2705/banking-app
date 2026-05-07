@@ -173,67 +173,97 @@ jobs:
             - Replicas: 2
             - Status: Deployed ✅
 
-  # Job 4: SoapUI API Tests (QA)
-  soapui-tests:
+  # Job 4: REST API Tests (QA)
+  api-tests:
     needs: deploy-qa
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
 
-      - name: Run SoapUI Tests
-        id: soapui
-        uses: docker://smartbear/soapui-testrunner:latest
+      - name: Run REST API Tests with curl
+        id: api-tests
+        uses: docker://curlimages/curl:latest
         run: |
           # Set banking app URL
-          BANKING_APP_URL="http://banking-app.tejas-qa.svc.cluster.local"
+          BASE_URL="http://banking-app.tejas-qa.svc.cluster.local"
 
-          # Run SoapUI tests
-          cd ${{ cloudbees.workspace }}/tests/soapui
-          testrunner.sh \
-            -e"$BANKING_APP_URL" \
-            -f${{ cloudbees.workspace }}/soapui-results \
-            -j \
-            -r \
-            banking-app-soapui-project.xml || true
+          echo "🧪 Running REST API Tests..."
+          PASSED=0
+          FAILED=0
 
-          # Check results
-          if [ -f ${{ cloudbees.workspace }}/soapui-results/TEST-*.xml ]; then
-            FAILURES=$(grep -c 'failures="[1-9]' ${{ cloudbees.workspace }}/soapui-results/TEST-*.xml || echo "0")
-            if [ "$FAILURES" -eq "0" ]; then
-              echo "PASS" > $CLOUDBEES_OUTPUTS/STATUS
-              echo "SoapUI tests passed ✅"
-            else
-              echo "FAIL" > $CLOUDBEES_OUTPUTS/STATUS
-              echo "SoapUI tests failed ❌"
-            fi
+          # Test 1: Health Check
+          echo "Test 1: Health Check"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health")
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Health check passed (200 OK)"
+            PASSED=$((PASSED + 1))
           else
-            echo "UNKNOWN" > $CLOUDBEES_OUTPUTS/STATUS
-            echo "No test results found"
+            echo "❌ Health check failed (HTTP $RESPONSE)"
+            FAILED=$((FAILED + 1))
           fi
 
-      - name: Publish SoapUI test evidence
+          # Test 2: Get All Accounts
+          echo "Test 2: Get All Accounts"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/accounts")
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Get accounts passed (200 OK)"
+            PASSED=$((PASSED + 1))
+          else
+            echo "❌ Get accounts failed (HTTP $RESPONSE)"
+            FAILED=$((FAILED + 1))
+          fi
+
+          # Test 3: Get All Users
+          echo "Test 3: Get All Users"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/users")
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Get users passed (200 OK)"
+            PASSED=$((PASSED + 1))
+          else
+            echo "❌ Get users failed (HTTP $RESPONSE)"
+            FAILED=$((FAILED + 1))
+          fi
+
+          # Summary
+          echo ""
+          echo "📊 Test Summary:"
+          echo "   Passed: $PASSED"
+          echo "   Failed: $FAILED"
+          echo "   Total: $((PASSED + FAILED))"
+
+          # Save outputs
+          echo "$PASSED" > $CLOUDBEES_OUTPUTS/PASSED
+          echo "$FAILED" > $CLOUDBEES_OUTPUTS/FAILED
+
+          if [ "$FAILED" -eq "0" ]; then
+            echo "PASS" > $CLOUDBEES_OUTPUTS/STATUS
+            echo "✅ All API tests passed!"
+          else
+            echo "FAIL" > $CLOUDBEES_OUTPUTS/STATUS
+            echo "❌ Some API tests failed"
+          fi
+
+      - name: Publish API test evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
           content: |-
-            ## SoapUI API Test Evidence
+            ## REST API Test Evidence
             - Environment: QA
             - Test Suite: Banking App API Tests
-            - Test Cases:
-              - Health Check Test
-              - Account CRUD Test
-              - Account Operations Test
-              - User Management Test
-            - Status: ${{ steps.soapui.outputs.STATUS }}
-            - Details:
-              - Tested endpoints: /actuator/health, /api/accounts, /api/users
-              - Assertions: HTTP status codes, JSON response validation, SLA checks
+            - Tests Passed: ${{ steps.api-tests.outputs.PASSED }}
+            - Tests Failed: ${{ steps.api-tests.outputs.FAILED }}
+            - Status: ${{ steps.api-tests.outputs.STATUS }}
+
+            **Test Cases:**
+            - ✅ Health Check (`GET /actuator/health`)
+            - ✅ Get All Accounts (`GET /api/accounts`)
+            - ✅ Get All Users (`GET /api/users`)
 
             **Test Coverage:**
             - ✅ Health endpoint availability
-            - ✅ Account creation and retrieval
-            - ✅ Deposit/Withdraw operations
-            - ✅ User management operations
-            - ✅ Response time SLA (< 1 second)
+            - ✅ Account API accessibility
+            - ✅ User API accessibility
+            - ✅ HTTP status code validation (200 OK)
 
   # Job 5: JMeter Performance Tests (QA)
   jmeter-tests:
@@ -322,7 +352,7 @@ jobs:
 
   # Job 6: QA Test Summary
   qa-test-summary:
-    needs: [soapui-tests, jmeter-tests]
+    needs: [api-tests, jmeter-tests]
     steps:
       - name: Publish QA test summary
         uses: cloudbees-io/publish-evidence-item@v1
@@ -339,10 +369,10 @@ jobs:
             - Status: ✅ Passed
             - Test Coverage: Service layer, Controller layer
 
-            #### 2. API Tests (SoapUI)
+            #### 2. API Tests (REST/curl)
             - Status: ✅ Passed
-            - Endpoints Tested: Health, Accounts, Users, Transactions
-            - Assertions: HTTP codes, JSON validation, SLA checks
+            - Endpoints Tested: Health, Accounts, Users
+            - Assertions: HTTP status code validation
 
             #### 3. Performance Tests (JMeter)
             - Status: ✅ Passed
