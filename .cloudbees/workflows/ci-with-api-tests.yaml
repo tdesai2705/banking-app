@@ -132,19 +132,13 @@ jobs:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
 
-      - name: Setup kubeconfig
-        uses: docker://bitnami/kubectl:latest
-        run: |
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > /tmp/kubeconfig
-          export KUBECONFIG=/tmp/kubeconfig
-          kubectl config current-context
-
       - name: Deploy to QA with Helm
         uses: cloudbees-io/helm-install@v1
         with:
           chart-location: ${{ cloudbees.workspace }}/chart
           release-name: banking-app
           namespace: tejas-qa
+          kubeconfig: ${{ secrets.KUBECONFIG }}
           values: |
             replicaCount: 2
             image:
@@ -155,12 +149,6 @@ jobs:
               type: ClusterIP
               port: 80
               targetPort: 8080
-
-      - name: Wait for deployment
-        uses: docker://bitnami/kubectl:latest
-        run: |
-          export KUBECONFIG=/tmp/kubeconfig
-          kubectl rollout status deployment/banking-app -n tejas-qa --timeout=5m
 
       - name: Publish deployment evidence
         uses: cloudbees-io/publish-evidence-item@v1
