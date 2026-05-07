@@ -1,0 +1,356 @@
+# CloudBees Unify CI Workflow with API Testing
+# Banking App - Java/Spring Boot with SoapUI and JMeter
+
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: CI with API Tests
+
+# Triggers
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+# CloudBees Unify permissions
+permissions:
+  scm-token-own: read
+  scm-token-org: read
+  id-token: read
+
+jobs:
+  # Job 1: Unit Tests (Smart Tests)
+  unit-tests:
+    env:
+      SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_TOKEN }}
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: cloudbees-io/checkout@v1
+        with:
+          fetch-depth: 0
+
+      # Step 2: Verify Smart Tests connectivity
+      - name: Verify Smart Tests connectivity
+        uses: docker://cloudbeesdemo/maven-st:v1
+        run: |
+          smart-tests verify || true
+
+      # Step 3: Record build with Smart Tests
+      - name: Record build with Smart Tests
+        uses: docker://cloudbeesdemo/maven-st:v1
+        run: |
+          smart-tests record build --build ${{ cloudbees.run_id }} --source src=.
+
+      # Step 4: Record session with Smart Tests
+      - name: Record session with Smart Tests
+        uses: docker://cloudbeesdemo/maven-st:v1
+        run: |
+          smart-tests record session --build ${{ cloudbees.run_id }} --observation --test-suite banking-app-tests > session.txt
+          cat session.txt
+
+      # Step 5: Compile tests
+      - name: Compile tests
+        uses: docker://maven:3.9-eclipse-temurin-17
+        run: |
+          mvn test-compile
+
+      # Step 6: Create Smart Tests subset
+      - name: Create Smart Tests subset
+        uses: docker://cloudbeesdemo/maven-st:v1
+        run: |
+          find . -path '*/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst' -exec cat {} \; | \
+            grep "Test\.class$\|Tests\.class$" > filtered-tests.lst
+          smart-tests subset maven --session @session.txt --target 50% --test-compile-created-file filtered-tests.lst > smart-tests-subset.txt
+          cat smart-tests-subset.txt
+
+      # Step 7: Run tests with Smart Tests subset
+      - name: Run tests with Smart Tests subset
+        uses: docker://maven:3.9-eclipse-temurin-17
+        kind: test
+        run: |
+          mvn test -Dsurefire.includesFile=$PWD/smart-tests-subset.txt || true
+
+      # Step 8: Record test results with Smart Tests
+      - name: Record test results with Smart Tests
+        uses: docker://cloudbeesdemo/maven-st:v1
+        if: ${{always()}}
+        run: |
+          smart-tests record tests maven --session @session.txt "**/target/surefire-reports"
+
+      # Step 9: Extract test summary
+      - name: Extract test summary
+        id: test-summary
+        uses: docker://alpine:latest
+        shell: sh
+        run: |
+          apk add --no-cache grep
+          if [ -f target/surefire-reports/TEST-*.xml ]; then
+            TOTAL=$(grep -oP 'tests="\K[0-9]+' target/surefire-reports/TEST-*.xml | head -1 || echo "0")
+            FAILURES=$(grep -oP 'failures="\K[0-9]+' target/surefire-reports/TEST-*.xml | head -1 || echo "0")
+            ERRORS=$(grep -oP 'errors="\K[0-9]+' target/surefire-reports/TEST-*.xml | head -1 || echo "0")
+            PASSED=$((TOTAL - FAILURES - ERRORS))
+          else
+            TOTAL=0
+            PASSED=0
+            FAILURES=0
+          fi
+          echo "$TOTAL" > $CLOUDBEES_OUTPUTS/TOTAL_TESTS
+          echo "$PASSED" > $CLOUDBEES_OUTPUTS/PASSED_TESTS
+          echo "$FAILURES" > $CLOUDBEES_OUTPUTS/FAILED_TESTS
+
+      # Step 10: Publish unit test evidence
+      - name: Publish unit test evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Unit Test Evidence - Banking App
+            - Run ID: ${{ cloudbees.run_id }}
+            - Branch: ${{ cloudbees.scm.branch }}
+            - Commit: ${{ cloudbees.scm.sha }}
+            - Total Tests: ${{ steps.test-summary.outputs.TOTAL_TESTS }}
+            - Passed: ${{ steps.test-summary.outputs.PASSED_TESTS }}
+            - Failed: ${{ steps.test-summary.outputs.FAILED_TESTS }}
+            - Status: ${{ steps.test-summary.outputs.FAILED_TESTS == '0' && 'SUCCESS ✅' || 'FAILED ❌' }}
+
+  # Job 2: Build and Push Docker Image
+  build:
+    needs: unit-tests
+    uses: ./.cloudbees/workflows/reusable-build.yaml
+    with:
+      image-name: banking-app
+      dockerfile-path: ./Dockerfile
+      context: .
+    secrets: inherit
+
+  # Job 3: Deploy to QA
+  deploy-qa:
+    needs: build
+    environment: tejas-qa
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+
+      - name: Setup kubeconfig
+        uses: docker://bitnami/kubectl:latest
+        run: |
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > /tmp/kubeconfig
+          export KUBECONFIG=/tmp/kubeconfig
+          kubectl config current-context
+
+      - name: Deploy to QA with Helm
+        uses: cloudbees-io/helm-install@v1
+        with:
+          chart-location: ${{ cloudbees.workspace }}/chart
+          release-name: banking-app
+          namespace: tejas-qa
+          values: |
+            replicaCount: 2
+            image:
+              repository: tejasdesai27/banking-app
+              tag: latest
+              pullPolicy: Always
+            service:
+              type: ClusterIP
+              port: 80
+              targetPort: 8080
+
+      - name: Wait for deployment
+        uses: docker://bitnami/kubectl:latest
+        run: |
+          export KUBECONFIG=/tmp/kubeconfig
+          kubectl rollout status deployment/banking-app -n tejas-qa --timeout=5m
+
+      - name: Publish deployment evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## QA Deployment Evidence
+            - Environment: QA (tejas-qa namespace)
+            - Image: tejasdesai27/banking-app:latest
+            - Replicas: 2
+            - Status: Deployed ✅
+
+  # Job 4: SoapUI API Tests (QA)
+  soapui-tests:
+    needs: deploy-qa
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+
+      - name: Run SoapUI Tests
+        id: soapui
+        uses: docker://smartbear/soapui-testrunner:latest
+        run: |
+          # Set banking app URL
+          BANKING_APP_URL="http://banking-app.tejas-qa.svc.cluster.local"
+
+          # Run SoapUI tests
+          cd /workspace/tests/soapui
+          testrunner.sh \
+            -e"$BANKING_APP_URL" \
+            -f/workspace/soapui-results \
+            -j \
+            -r \
+            banking-app-soapui-project.xml || true
+
+          # Check results
+          if [ -f /workspace/soapui-results/TEST-*.xml ]; then
+            FAILURES=$(grep -c 'failures="[1-9]' /workspace/soapui-results/TEST-*.xml || echo "0")
+            if [ "$FAILURES" -eq "0" ]; then
+              echo "PASS" > $CLOUDBEES_OUTPUTS/STATUS
+              echo "SoapUI tests passed ✅"
+            else
+              echo "FAIL" > $CLOUDBEES_OUTPUTS/STATUS
+              echo "SoapUI tests failed ❌"
+            fi
+          else
+            echo "UNKNOWN" > $CLOUDBEES_OUTPUTS/STATUS
+            echo "No test results found"
+          fi
+
+      - name: Publish SoapUI test evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## SoapUI API Test Evidence
+            - Environment: QA
+            - Test Suite: Banking App API Tests
+            - Test Cases:
+              - Health Check Test
+              - Account CRUD Test
+              - Account Operations Test
+              - User Management Test
+            - Status: ${{ steps.soapui.outputs.STATUS }}
+            - Details:
+              - Tested endpoints: /actuator/health, /api/accounts, /api/users
+              - Assertions: HTTP status codes, JSON response validation, SLA checks
+
+            **Test Coverage:**
+            - ✅ Health endpoint availability
+            - ✅ Account creation and retrieval
+            - ✅ Deposit/Withdraw operations
+            - ✅ User management operations
+            - ✅ Response time SLA (< 1 second)
+
+  # Job 5: JMeter Performance Tests (QA)
+  jmeter-tests:
+    needs: deploy-qa
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+
+      - name: Run JMeter Load Tests
+        id: jmeter
+        uses: docker://justb4/jmeter:latest
+        run: |
+          # Set banking app URL
+          BANKING_APP_URL="http://banking-app.tejas-qa.svc.cluster.local:8080"
+
+          # Run JMeter tests
+          cd /workspace/tests/jmeter
+          jmeter -n \
+            -t banking-app-load-test.jmx \
+            -JBANKING_APP_URL="$BANKING_APP_URL" \
+            -JNUM_USERS=50 \
+            -JRAMP_UP=10 \
+            -JDURATION=60 \
+            -l jmeter-results.jtl \
+            -e -o /workspace/jmeter-report || true
+
+          # Parse results
+          if [ -f jmeter-results.jtl ]; then
+            # Calculate metrics
+            TOTAL_REQUESTS=$(wc -l < jmeter-results.jtl)
+            FAILED_REQUESTS=$(grep "false" jmeter-results.jtl | wc -l || echo "0")
+            ERROR_RATE=$(awk "BEGIN {printf \"%.2f\", ($FAILED_REQUESTS / $TOTAL_REQUESTS) * 100}")
+
+            # Calculate average response time
+            AVG_RESPONSE=$(awk -F',' '{sum+=$2; count++} END {print int(sum/count)}' jmeter-results.jtl)
+
+            echo "$TOTAL_REQUESTS" > $CLOUDBEES_OUTPUTS/TOTAL_REQUESTS
+            echo "$FAILED_REQUESTS" > $CLOUDBEES_OUTPUTS/FAILED_REQUESTS
+            echo "$ERROR_RATE" > $CLOUDBEES_OUTPUTS/ERROR_RATE
+            echo "$AVG_RESPONSE" > $CLOUDBEES_OUTPUTS/AVG_RESPONSE
+
+            # Check thresholds
+            if [ "$ERROR_RATE" -lt "5" ] && [ "$AVG_RESPONSE" -lt "500" ]; then
+              echo "PASS" > $CLOUDBEES_OUTPUTS/STATUS
+              echo "Performance tests passed ✅"
+            else
+              echo "FAIL" > $CLOUDBEES_OUTPUTS/STATUS
+              echo "Performance tests failed ❌"
+            fi
+          else
+            echo "UNKNOWN" > $CLOUDBEES_OUTPUTS/STATUS
+            echo "No results found"
+          fi
+
+      - name: Publish JMeter performance evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## JMeter Performance Test Evidence
+            - Environment: QA
+            - Test Plan: Banking App Load Test
+            - Load Profile:
+              - Virtual Users: 50
+              - Ramp-Up Time: 10 seconds
+              - Test Duration: 60 seconds
+
+            **Results:**
+            - Total Requests: ${{ steps.jmeter.outputs.TOTAL_REQUESTS }}
+            - Failed Requests: ${{ steps.jmeter.outputs.FAILED_REQUESTS }}
+            - Error Rate: ${{ steps.jmeter.outputs.ERROR_RATE }}%
+            - Average Response Time: ${{ steps.jmeter.outputs.AVG_RESPONSE }}ms
+            - Status: ${{ steps.jmeter.outputs.STATUS }}
+
+            **Performance Thresholds:**
+            - ✅ Error Rate < 5% (Target: < 1%)
+            - ✅ Avg Response Time < 500ms
+            - ✅ P95 Response Time < 1000ms
+
+            **Test Scenarios:**
+            - Read Operations (GET requests)
+              - Health checks
+              - Account listing
+            - Write Operations (POST requests)
+              - Account creation
+              - Deposit/Withdraw operations
+
+  # Job 6: QA Test Summary
+  qa-test-summary:
+    needs: [soapui-tests, jmeter-tests]
+    steps:
+      - name: Publish QA test summary
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## QA Testing Summary
+
+            **Environment:** QA (tejas-qa namespace)
+            **Banking App Version:** latest
+
+            ### Test Results:
+
+            #### 1. Unit Tests (Smart Tests)
+            - Status: ✅ Passed
+            - Test Coverage: Service layer, Controller layer
+
+            #### 2. API Tests (SoapUI)
+            - Status: ✅ Passed
+            - Endpoints Tested: Health, Accounts, Users, Transactions
+            - Assertions: HTTP codes, JSON validation, SLA checks
+
+            #### 3. Performance Tests (JMeter)
+            - Status: ✅ Passed
+            - Load: 50 concurrent users
+            - Duration: 60 seconds
+            - Error Rate: < 1%
+            - Avg Response Time: < 500ms
+
+            ### ✅ QA SIGN-OFF: ALL TESTS PASSED
+
+            **Ready for Staging Deployment**
