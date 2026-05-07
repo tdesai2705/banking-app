@@ -56,7 +56,7 @@ jobs:
             - Version: ${{ steps.version.outputs.VERSION }}
             - Branch: ${{ cloudbees.scm.branch }}
             - Commit: ${{ cloudbees.scm.sha }}
-            - Created: ${{ cloudbees.run_time }}
+            - Run ID: ${{ cloudbees.run_id }}
 
   # Job 1.2: Build Application
   build:
