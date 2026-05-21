@@ -118,24 +118,23 @@ jobs:
         run: |
           mvn clean package -DskipTests
 
-      - name: Build Docker image
-        uses: docker://docker:latest
-        run: |
-          docker build -t tejasdesai27/banking-app:${{ cloudbees.run_id }} \
-                       -t tejasdesai27/banking-app:latest .
-          echo "✅ Docker image built successfully"
+      - name: Configure Docker Hub credentials
+        id: dockerconfig
+        uses: cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: index.docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Login to Docker Hub
-        uses: docker://docker:latest
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u tejasdesai27 --password-stdin
-
-      - name: Push Docker image
-        uses: docker://docker:latest
-        run: |
-          docker push tejasdesai27/banking-app:${{ cloudbees.run_id }}
-          docker push tejasdesai27/banking-app:latest
-          echo "✅ Docker image pushed to Docker Hub"
+      - name: Build and push Docker image with Kaniko
+        id: kaniko-build
+        uses: cloudbees-io/kaniko@v1
+        kind: build
+        with:
+          destination: tejasdesai27/banking-app:${{ cloudbees.run_id }},tejasdesai27/banking-app:latest
+          context: .
+          dockerfile: ./Dockerfile
+          verbosity: info
 
   # Job 3: Trivy Container Security Scan (NEW!)
   trivy-scan:
