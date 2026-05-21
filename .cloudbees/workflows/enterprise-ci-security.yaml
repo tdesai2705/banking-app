@@ -197,7 +197,7 @@ jobs:
             ## Trivy Container Security Scan
             - Image: tejasdesai27/banking-app:${{ cloudbees.run_id }}
             - Scanner: Trivy (Aqua Security)
-            - Scan Date: ${{ cloudbees.timestamp }}
+            - Run ID: ${{ cloudbees.run_id }}
 
             **Vulnerability Summary:**
             - 🔴 CRITICAL: ${{ steps.trivy.outputs.CRITICAL }}
@@ -412,7 +412,7 @@ jobs:
             - Target: http://banking-app (QA environment)
             - Scanner: OWASP Zap Baseline Scan
             - Scan Type: Dynamic Application Security Testing (DAST)
-            - Scan Date: ${{ cloudbees.timestamp }}
+            - Run ID: ${{ cloudbees.run_id }}
 
             **Security Issues Found:**
             - 🔴 HIGH: ${{ steps.zap.outputs.HIGH }}
