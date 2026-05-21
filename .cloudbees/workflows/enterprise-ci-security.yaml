@@ -118,9 +118,6 @@ jobs:
         run: |
           mvn clean package -DskipTests
 
-      - name: Configure Docker credentials
-        uses: cloudbees-io/configure-ecr-credentials@v1
-
       - name: Build Docker image
         uses: docker://docker:latest
         run: |
