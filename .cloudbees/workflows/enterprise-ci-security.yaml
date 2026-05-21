@@ -143,6 +143,12 @@ jobs:
   # Job 3: Trivy Container Security Scan (NEW!)
   trivy-scan:
     needs: build
+    outputs:
+      critical: ${{ steps.trivy.outputs.CRITICAL }}
+      high: ${{ steps.trivy.outputs.HIGH }}
+      medium: ${{ steps.trivy.outputs.MEDIUM }}
+      low: ${{ steps.trivy.outputs.LOW }}
+      status: ${{ steps.trivy.outputs.STATUS }}
     steps:
       - name: Run Trivy vulnerability scan
         id: trivy
@@ -289,6 +295,12 @@ jobs:
   # Job 6: Zap Dynamic Security Scan (NEW!)
   zap-dast-scan:
     needs: wait-for-app
+    outputs:
+      high: ${{ steps.zap.outputs.HIGH }}
+      medium: ${{ steps.zap.outputs.MEDIUM }}
+      low: ${{ steps.zap.outputs.LOW }}
+      info: ${{ steps.zap.outputs.INFO }}
+      status: ${{ steps.zap.outputs.STATUS }}
     steps:
       - name: Set kubeconfig
         uses: cloudbees-days/setup-kubeconfig
@@ -512,18 +524,18 @@ jobs:
           echo ""
           echo "Security Scan Results:"
           echo "  Trivy Container Scan:"
-          echo "    - CRITICAL: ${{ needs.trivy-scan.steps.trivy.outputs.CRITICAL }}"
-          echo "    - HIGH: ${{ needs.trivy-scan.steps.trivy.outputs.HIGH }}"
+          echo "    - CRITICAL: ${{ needs.trivy-scan.outputs.critical }}"
+          echo "    - HIGH: ${{ needs.trivy-scan.outputs.high }}"
           echo "  Zap DAST Scan:"
-          echo "    - HIGH: ${{ needs.zap-dast-scan.steps.zap.outputs.HIGH }}"
-          echo "    - MEDIUM: ${{ needs.zap-dast-scan.steps.zap.outputs.MEDIUM }}"
+          echo "    - HIGH: ${{ needs.zap-dast-scan.outputs.high }}"
+          echo "    - MEDIUM: ${{ needs.zap-dast-scan.outputs.medium }}"
           echo ""
 
           # Define thresholds
-          TRIVY_CRITICAL=${{ needs.trivy-scan.steps.trivy.outputs.CRITICAL }}
-          TRIVY_HIGH=${{ needs.trivy-scan.steps.trivy.outputs.HIGH }}
-          ZAP_HIGH=${{ needs.zap-dast-scan.steps.zap.outputs.HIGH }}
-          ZAP_MEDIUM=${{ needs.zap-dast-scan.steps.zap.outputs.MEDIUM }}
+          TRIVY_CRITICAL=${{ needs.trivy-scan.outputs.critical }}
+          TRIVY_HIGH=${{ needs.trivy-scan.outputs.high }}
+          ZAP_HIGH=${{ needs.zap-dast-scan.outputs.high }}
+          ZAP_MEDIUM=${{ needs.zap-dast-scan.outputs.medium }}
 
           # Evaluate gate
           GATE_PASSED="true"
@@ -576,10 +588,10 @@ jobs:
             - Zap MEDIUM risk issues: ≤ 3 ✅
 
             **Evaluation Results:**
-            - Trivy CRITICAL: ${{ needs.trivy-scan.steps.trivy.outputs.CRITICAL }}
-            - Trivy HIGH: ${{ needs.trivy-scan.steps.trivy.outputs.HIGH }}
-            - Zap HIGH: ${{ needs.zap-dast-scan.steps.zap.outputs.HIGH }}
-            - Zap MEDIUM: ${{ needs.zap-dast-scan.steps.zap.outputs.MEDIUM }}
+            - Trivy CRITICAL: ${{ needs.trivy-scan.outputs.critical }}
+            - Trivy HIGH: ${{ needs.trivy-scan.outputs.high }}
+            - Zap HIGH: ${{ needs.zap-dast-scan.outputs.high }}
+            - Zap MEDIUM: ${{ needs.zap-dast-scan.outputs.medium }}
 
             **Gate Status:** ${{ steps.gate.outputs.GATE_PASSED == 'true' && '✅ PASSED' || '❌ FAILED' }}
 
