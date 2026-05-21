@@ -5,12 +5,8 @@ apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
 name: CI with API Tests
 
-# Triggers
+# Triggers - MANUAL ONLY (archived - using enterprise-ci-security.yaml now)
 on:
-  push:
-    branches:
-      - main
-      - develop
   workflow_dispatch:
 
 # CloudBees Unify permissions
