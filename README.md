@@ -57,3 +57,4 @@ The CI pipeline runs on push to main/develop and on pull requests to main.
 
 <!-- Smart Tests integration with correct API token - Thu Apr  9 20:05:24 IST 2026 -->
 # Trigger CI after artifact registration removal
+# Trigger workflow demo - Fri May 29 13:05:08 IST 2026
