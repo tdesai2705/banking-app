@@ -46,6 +46,8 @@ jobs:
       - name: Store Test Results for Smart Tests
         if: always()
         uses: cloudbees-oss/smart-tests-results-upload-action@v1
+        with:
+          path: '**/target/surefire-reports/*.xml'
 
       - name: Upload test results as artifacts (backup)
         if: always()
