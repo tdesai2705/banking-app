@@ -43,6 +43,13 @@ jobs:
         run: mvn test
         continue-on-error: true
 
+      - name: Debug - List test result files
+        if: always()
+        run: |
+          echo "Looking for test result files..."
+          find . -name "*.xml" -path "*/target/surefire-reports/*" -type f || echo "No XML files found"
+          ls -la target/surefire-reports/ || echo "surefire-reports directory not found"
+
       - name: Store Test Results for Smart Tests
         if: always()
         uses: cloudbees-oss/smart-tests-results-upload-action@v1
