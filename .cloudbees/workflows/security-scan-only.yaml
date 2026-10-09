@@ -1,0 +1,29 @@
+# Scan-only workflow: publishes findings to the Unify security center.
+# No build, push or deploy. Reusable for any repo onboarded as a component.
+# UNTESTED: action inputs below come from the scanner reference docs, not from a run.
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: security-scan-only
+
+on:
+  workflow_dispatch:
+
+permissions:
+  scm-token-own: read
+  id-token: write
+
+jobs:
+  scan:
+    steps:
+      - name: Checkout
+        uses: cloudbees-io/checkout@v1
+
+      - name: Secret scan (Gitleaks)
+        uses: cloudbees-io/gitleaks-plugin@v1
+
+      - name: IaC scan (Checkov)
+        uses: cloudbees-io/checkov-hybrid-plugin@v1
+        with:
+          file-path: .
+          framework: all
+          skip-check: ""
